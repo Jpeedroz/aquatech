@@ -1,0 +1,13 @@
+.eventos-topo { display: flex; justify-content: space-between; align-items: flex-start; margin: 26px 0 14px; }
+.eventos-topo h2 { font-size: 15px; font-weight: 600; color: var(--verde); }
+.linha-tempo { position: relative; padding-left: 28px; }
+.linha-tempo::before { content: ''; position: absolute; left: 4px; top: 10px; bottom: 10px; width: 2px; background: #dfe5ec; }
+.evento { position: relative; margin-bottom: 26px; padding: 14px 18px; }
+.evento::before { content: ''; position: absolute; left: -29px; top: 20px; width: 10px; height: 10px; border-radius: 50%; background: var(--verde); }
+.evento-data { font: 600 10px var(--fonte-titulo); color: #4a5666; margin-bottom: 8px; }
+.evento-dados { display: flex; gap: 46px; }
+.evento-dados small { display: block; font-size: 9px; color: var(--cinza); }
+.evento-dados strong { font: 700 13px var(--fonte-titulo); }
+.evento-dados .azul { color: var(--azul); } .evento-dados .verde { color: var(--verde); }
+.fim-lista { font-size: 10px; color: #9aa5b3; position: relative; }
+.fim-lista::before { content: ''; position: absolute; left: -27px; top: 3px; width: 7px; height: 7px; border-radius: 50%; background: #cfd8e2; }
