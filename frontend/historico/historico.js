@@ -15,7 +15,6 @@ async function carregar(periodo) {
   } catch (e) { mostrarMensagem(e.message, 'erro'); }
 }
 
-// Junta umidade e temperatura do mesmo horário e calcula irrigação e consumo acumulado
 function montarLinhas(leituras, eventos) {
   const mapa = new Map();
   leituras.forEach(l => {
