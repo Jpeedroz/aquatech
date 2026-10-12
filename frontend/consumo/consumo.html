@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Consumo de água — AquaSmart</title>
+  <link rel="stylesheet" href="../shared/css/global.css">
+  <link rel="stylesheet" href="consumo.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <header class="topbar"><h1 id="tituloPagina"></h1><p id="subtituloPagina"></p></header>
+      <section class="conteudo">
+        <div class="grade-kpi">
+          <article class="card kpi"><div class="kpi-rotulo" id="r1"></div><div class="kpi-valor" id="cHoje">—</div></article>
+          <article class="card kpi"><div class="kpi-rotulo" id="r2"></div><div class="kpi-valor" id="c7">—</div></article>
+          <article class="card kpi"><div class="kpi-rotulo" id="r3"></div><div class="kpi-valor" id="c30">—</div></article>
+          <article class="card kpi"><div class="kpi-rotulo" id="r4"></div><div class="kpi-valor" id="cTotal">—</div></article>
+        </div>
+        <article class="card grafico-consumo">
+          <div class="grafico-topo">
+            <div><h2>Consumo de água</h2><p class="sub" id="subGrafico"></p></div>
+            <div id="filtro"></div>
+          </div>
+          <div id="grafico"></div>
+        </article>
+        <div class="resumo-tres">
+          <article class="resumo maior"><small>MAIOR CONSUMO</small><strong id="maiorDia">—</strong><span id="maiorLitros"></span></article>
+          <article class="resumo menor"><small>MENOR CONSUMO</small><strong id="menorDia">—</strong><span id="menorLitros"></span></article>
+          <article class="resumo media"><small>MÉDIA DIÁRIA</small><strong id="mediaDiaria">—</strong><span id="mediaTexto"></span></article>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="../shared/js/utils.js"></script>
+  <script src="../shared/js/session.js"></script>
+  <script src="../shared/js/mockData.js"></script>
+  <script src="../shared/js/api.js"></script>
+  <script src="consumo.js"></script>
+</body>
+</html>
