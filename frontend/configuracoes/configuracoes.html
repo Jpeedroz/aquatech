@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Configurações — AquaSmart</title>
+  <link rel="stylesheet" href="../shared/css/global.css">
+  <link rel="stylesheet" href="../propriedade/propriedade.css">
+  <link rel="stylesheet" href="configuracoes.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <header class="topbar"><h1 id="tituloPagina"></h1><p id="subtituloPagina"></p></header>
+      <section class="conteudo">
+        <article class="card cfg-card">
+          <div class="abas">
+            <button type="button" class="aba ativa" data-aba="conta">Minha conta</button>
+            <button type="button" class="aba" data-aba="propriedade">Minha propriedade</button>
+          </div>
+
+          <!-- ABA 1: MINHA CONTA (tabela usuarios) -->
+          <form class="painel" id="painelConta" novalidate>
+            <h2>Meus dados</h2><p class="sub">Atualize suas informações pessoais.</p>
+            <label class="campo">Nome completo<input id="nome"></label>
+            <div class="par">
+              <label class="campo">E-mail<input type="email" id="email"></label>
+              <label class="campo">Telefone<input id="telefone"></label>
+            </div>
+            <hr>
+            <h2>Segurança</h2><p class="sub">Gerencie sua senha de acesso.</p>
+            <div class="par par-senha">
+              <label class="campo">Senha<input type="password" value="••••••••••" disabled></label>
+              <button type="button" class="btn btn-contorno" id="btnSenha">Alterar senha</button>
+            </div>
+            <p class="erro-texto" id="erroConta"></p>
+            <div class="botoes"><button type="button" class="btn btn-claro" id="cancelarConta">Cancelar</button>
+              <button type="submit" class="btn btn-azul">Salvar alterações</button></div>
+          </form>
+
+          <!-- ABA 2: MINHA PROPRIEDADE (tabela propriedades) -->
+          <form class="painel" id="painelPropriedade" novalidate hidden>
+            <h2>Dados da propriedade</h2><p class="sub">Atualize as informações da sua propriedade.</p>
+            <label class="campo">Nome da propriedade<input id="pNome"></label>
+            <div class="par">
+              <label class="campo">Localização<input id="pLocal"></label>
+              <label class="campo">Área cultivada (hectares)<input id="pArea" type="number" min="0.01" step="0.01"></label>
+            </div>
+            <label class="campo">Cultura<select id="pCultura"></select></label>
+            <hr>
+            <h2>Modo de irrigação</h2><p class="sub">Selecione o sistema de irrigação utilizado na propriedade.</p>
+            <div class="metodos" id="metodos"></div>
+            <p class="erro-texto" id="erroProp"></p>
+            <div class="botoes"><button type="button" class="btn btn-claro" id="cancelarProp">Cancelar</button>
+              <button type="submit" class="btn btn-azul">Salvar alterações</button></div>
+          </form>
+        </article>
+      </section>
+    </main>
+  </div>
+  <script src="../shared/js/utils.js"></script>
+  <script src="../shared/js/session.js"></script>
+  <script src="../shared/js/mockData.js"></script>
+  <script src="../shared/js/api.js"></script>
+  <script src="configuracoes.js"></script>
+</body>
+</html>

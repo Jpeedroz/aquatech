@@ -1,0 +1,12 @@
+.cfg-card { max-width: 780px; margin: 6px auto 0; overflow: hidden; }
+.abas { display: flex; gap: 28px; padding: 14px 24px 0; border-bottom: 1px solid var(--borda); }
+.aba { background: none; border: 0; border-bottom: 2px solid transparent; padding: 0 0 10px; font: 500 12px var(--fonte-titulo); color: #9aa5b3; cursor: pointer; }
+.aba.ativa { color: var(--verde); border-bottom-color: var(--verde); font-weight: 600; }
+.painel { padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 12px; }
+.painel h2 { font-size: 15px; font-weight: 600; }
+.painel .sub { font-size: 10px; color: var(--cinza); margin: -8px 0 0; }
+.painel hr { border: 0; border-top: 1px solid var(--borda); margin: 8px -24px; }
+.par { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.par-senha { align-items: end; grid-template-columns: 1fr 1fr; }
+.par-senha .btn { width: 120px; }
+.botoes { display: flex; justify-content: flex-end; gap: 12px; margin-top: 4px; }
