@@ -31,7 +31,7 @@ Sensores → ESP32 → Wi-Fi → API → PostgreSQL → Dashboard
 * Desliga a bomba: umidade a partir de 30%.
 * Estado do solo: crítico (< 12%), seco (< 18%), adequado (< 30%), úmido (≥ 30%).
 
-##Execução:
+## Execução:
 
 ## 1. Clonar o projeto
 
