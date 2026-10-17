@@ -39,6 +39,7 @@ class TestPostgres(unittest.TestCase):
         conexao = abrir_conexao(CFG)
         with conexao, conexao.cursor() as cursor:
             cursor.execute(config.ARQUIVO_SQL.read_text(encoding='utf-8'))
+            cursor.execute(config.ARQUIVO_SQL_TESTE.read_text(encoding='utf-8'))
             cursor.execute("UPDATE usuarios SET senha_hash = %s WHERE email = 'joao@example.com'",
                            (gerar_hash_senha('segredo1'),))
         conexao.close()

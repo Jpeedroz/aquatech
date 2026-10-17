@@ -1,9 +1,10 @@
 """
 NOME: scripts/init_db.py
-FUNÇÃO: Prepara o banco PostgreSQL executando database/aquatech_database.sql.
+FUNÇÃO: Prepara o banco PostgreSQL executando database/aquatech_database.sql (só a estrutura, sem dados).
 USO:    python scripts/init_db.py                          (banco já existe, ainda sem tabelas)
         python scripts/init_db.py --criar-banco            (cria o banco DB_NAME antes, se faltar)
-        python scripts/init_db.py --definir-senha-teste    (define a senha do usuário de teste joao@example.com)
+        python scripts/init_db.py --recriar --com-dados-teste  (recria e carrega database/dados_teste.sql: opcional, para ver telas sem o ESP32)
+        python scripts/init_db.py --definir-senha-teste    (define a senha do usuário de teste joao@example.com; só existe com --com-dados-teste)
         python scripts/init_db.py --recriar                (APAGA tudo e recria: pede confirmação)
         python scripts/init_db.py --se-faltar              (usado pelo Docker: cria só se ainda não existir; se existir, não faz nada e sai sem erro)
 ATENÇÃO: o SQL do projeto começa com DROP TABLE: rodá-lo de novo APAGA todos os dados.
@@ -53,6 +54,7 @@ def main():
     ap.add_argument('--criar-banco', action='store_true')
     ap.add_argument('--recriar', action='store_true', help='apaga e recria as tabelas')
     ap.add_argument('--definir-senha-teste', action='store_true')
+    ap.add_argument('--com-dados-teste', action='store_true', help='carrega também database/dados_teste.sql (usuário, leituras e irrigações de mentira)')
     ap.add_argument('--se-faltar', action='store_true', help='cria a estrutura só se ainda não existir (nunca apaga nada)')
     args = ap.parse_args()
 
@@ -82,7 +84,10 @@ def main():
                 if input(f'Isto APAGA todas as tabelas do banco "{cfg["DB_NAME"]}". Digite APAGAR para continuar: ') != 'APAGAR':
                     sys.exit('Cancelado. Nada foi alterado.')
             cursor.execute(config.ARQUIVO_SQL.read_text(encoding='utf-8'))
-            print('Estrutura do banco criada (com os dados de teste do arquivo SQL).')
+            print('Estrutura do banco criada.')
+            if args.com_dados_teste:
+                cursor.execute(config.ARQUIVO_SQL_TESTE.read_text(encoding='utf-8'))
+                print('Dados de teste carregados (database/dados_teste.sql).')
 
         if args.definir_senha_teste:
             cursor.execute('UPDATE usuarios SET senha_hash = %s, senha_alterada_em = LOCALTIMESTAMP '
