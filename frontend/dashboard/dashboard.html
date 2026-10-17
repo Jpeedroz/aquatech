@@ -14,43 +14,74 @@
       <header class="topbar"><h1 id="tituloPagina"></h1><p id="subtituloPagina"></p></header>
       <section class="conteudo">
         <div class="grade-kpi">
-          <article class="card kpi kpi-solo" id="cardSolo">
-            <div class="kpi-rotulo">Umidade do solo atual</div>
-            <div class="kpi-valor" id="umidade">—</div>
-            <div class="kpi-status"><i class="ponto"></i><span id="soloStatus">—</span></div>
+          <article class="card kpi kpi-solo adequado" id="cardSolo">
+            <div class="kpi-rotulo"><span id="soloRotulo">Umidade do solo atual</span><em class="kpi-tag" id="soloTag">agora</em></div>
+            <div class="kpi-corpo">
+              <div class="kpi-linha">
+                <div class="kpi-valor" id="umidade">—</div>
+                <button type="button" class="kpi-voltar" id="soloVoltar" style="visibility:hidden">Voltar ao atual</button>
+              </div>
+              <div class="kpi-barra" id="soloBarra" aria-hidden="true" hidden><div id="soloBarraPreench"></div><u id="soloMarcaLiga"></u><u id="soloMarcaDesliga"></u></div>
+            </div>
+            <div class="kpi-rodape">
+              <div class="kpi-textos">
+                <div class="kpi-status"><i class="ponto"></i><span id="soloStatus">—</span></div>
+                <div class="kpi-nota" id="soloHora"></div>
+              </div>
+            </div>
           </article>
           <article class="card kpi">
-            <div class="kpi-rotulo">Status da irrigação</div>
+            <div class="kpi-rotulo"><span>Status da irrigação</span><em class="kpi-tag">agora</em></div>
             <div class="kpi-valor"><i class="ponto" id="pontoIrrig"></i><span id="irrigStatus">—</span></div>
             <div class="kpi-nota" id="irrigNota"></div>
           </article>
           <article class="card kpi">
-            <div class="kpi-rotulo">Temperatura atual</div>
+            <div class="kpi-rotulo"><span>Temperatura atual</span><em class="kpi-tag">agora</em></div>
             <div class="kpi-valor" id="temperatura">—</div>
             <div class="kpi-nota">condição atual do ambiente</div>
           </article>
           <article class="card kpi">
-            <div class="kpi-rotulo">Consumo hoje</div>
+            <div class="kpi-rotulo"><span id="rotuloConsumo">Consumo hoje</span><em class="kpi-tag kpi-tag-periodo" id="tagConsumo">período</em></div>
             <div class="kpi-valor azul" id="consumoHoje">—</div>
-            <div class="kpi-nota">Água utilizada na irrigação</div>
+            <div class="kpi-nota" id="notaConsumo">Água utilizada na irrigação</div>
           </article>
         </div>
         <article class="card grafico-card">
-          <h2>Umidade do solo hoje</h2>
+          <header class="grafico-cab">
+            <div>
+              <h2 id="tituloGrafico">Umidade do solo</h2>
+              <p class="sub" id="subGrafico"></p>
+            </div>
+            <div id="filtro"></div>
+          </header>
           <div class="legenda">
-            <span><i class="leg-ponto"></i>Umidade do solo</span>
+            <span><i class="leg-ponto verde"></i>Irrigação ligada</span>
+            <span><i class="leg-ponto vermelho"></i>Irrigação desligada</span>
             <span><i class="leg-linha"></i>Limite de irrigação</span>
             <span><i class="leg-faixa"></i>Irrigação ativa</span>
+            <span class="dica-clique">Clique em um ponto para ver o indicador daquela medição</span>
           </div>
-          <div id="grafico"></div>
+          <div id="grafico" aria-live="polite"></div>
         </article>
+        <div class="resumo-tres" id="resumoUmidade" aria-label="Resumo da umidade do período" hidden>
+          <article class="resumo maior"><small>UMIDADE MÁXIMA</small><strong id="umMaxQuando">—</strong><span id="umMaxValor"></span></article>
+          <article class="resumo menor"><small>UMIDADE MÍNIMA</small><strong id="umMinQuando">—</strong><span id="umMinValor"></span></article>
+          <article class="resumo media"><small>UMIDADE MÉDIA <em>(todas as leituras)</em></small><strong id="umMedValor">—</strong><span id="umMedTexto"></span></article>
+        </div>
+        <div id="paginacaoDias"></div>
       </section>
     </main>
   </div>
   <script src="../shared/js/utils.js"></script>
   <script src="../shared/js/session.js"></script>
+  <script src="../shared/js/tempo.js"></script>
+  <script src="../shared/js/config.js"></script>
+  <script src="../shared/js/demo.js"></script>
+  <script src="../shared/js/analise.js"></script>
   <script src="../shared/js/mockData.js"></script>
   <script src="../shared/js/api.js"></script>
+  <script src="../shared/js/componentes.js"></script>
+  <script src="../shared/js/graficos.js"></script>
   <script src="dashboard.js"></script>
 </body>
 </html>
