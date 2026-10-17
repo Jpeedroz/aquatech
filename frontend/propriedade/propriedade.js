@@ -34,7 +34,7 @@ function iniciar() {
     if (area <= 0) { erro.textContent = 'A área cultivada deve ser maior que zero.'; return; }
     erro.textContent = '';
     try {
-      await cadastrarPropriedade({            // futuramente: POST /api/propriedades
+      await cadastrarPropriedade({            // POST /api/propriedades
         nome, localizacao, area_hectares: area,
         cultura: selCultura.value,
         metodo_irrigacao: document.querySelector('input[name=metodo]:checked').value

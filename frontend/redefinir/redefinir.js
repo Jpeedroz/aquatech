@@ -4,7 +4,7 @@ const token = new URLSearchParams(window.location.search).get('token');
 
 document.addEventListener('DOMContentLoaded', async () => {
   let valido = false;
-  try { valido = (await verificarTokenRecuperacao(token)).valido; }   // futuramente: GET /api/redefinir-senha/verificar
+  try { valido = (await verificarTokenRecuperacao(token)).valido; }   // GET /api/redefinir-senha/verificar
   catch (e) { valido = false; }
   document.getElementById('formRedefinir').hidden = !valido;
   document.getElementById('linkInvalido').hidden = valido;
@@ -21,7 +21,7 @@ document.getElementById('formRedefinir').addEventListener('submit', async (ev) =
   erro.textContent = '';
   try {
     // O Flask valida o token de novo, gera o novo hash e invalida o token (uso único).
-    const r = await redefinirSenha(token, senha);            // futuramente: POST /api/redefinir-senha
+    const r = await redefinirSenha(token, senha);            // POST /api/redefinir-senha
     mostrarMensagem(r.mensagem, 'sucesso');
     setTimeout(() => { window.location.href = '../login/login.html'; }, 2200);
   } catch (e) {

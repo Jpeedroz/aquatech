@@ -51,7 +51,7 @@ document.getElementById('formLogin').addEventListener('submit', async (ev) => {
 
   // 2) validação no servidor
   try {
-    const dados = await login(email, senha);          // futuramente: POST /api/login
+    const dados = await login(email, senha);          // POST /api/login
     if (!dados.propriedade_id) {                      // conta criada, mas cadastro da propriedade não concluído
       salvarCadastroPendente(dados);
       window.location.href = '../propriedade/propriedade.html';

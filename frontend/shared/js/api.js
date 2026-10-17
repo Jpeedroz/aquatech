@@ -69,8 +69,8 @@ async function cadastrarPropriedade(dados) {
   return USAR_MOCK ? mockCadastrarPropriedade(pendente.usuario_id, dados)
                    : post('/propriedades', { ...dados, usuario_id: pendente.usuario_id, token_cadastro: pendente.token });
 }
-// Sair: avisa a API (quando existir), limpa a sessão e volta ao login.
-// A proteção REAL das telas será feita no Flask; limpar a sessão aqui é só interface.
+// Sair: avisa a API (modo real), limpa a sessão e volta ao login.
+// A proteção REAL das telas é feita no Flask; limpar a sessão aqui é só interface.
 async function sair() {
   try { if (!USAR_MOCK) await post('/logout', {}); } catch (e) { /* segue mesmo assim */ }
   limparSessao();

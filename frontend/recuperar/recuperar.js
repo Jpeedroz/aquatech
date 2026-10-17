@@ -7,7 +7,7 @@ document.getElementById('formRecuperar').addEventListener('submit', async (ev) =
   if (!validarEmail(email)) { erro.textContent = 'Informe um e-mail válido.'; return; }
   erro.textContent = '';
   try {
-    const r = await solicitarRecuperacaoSenha(email);        // futuramente: POST /api/recuperar-senha
+    const r = await solicitarRecuperacaoSenha(email);        // POST /api/recuperar-senha
     document.getElementById('textoResposta').textContent = r.mensagem;   // mesma mensagem sempre
     document.getElementById('resposta').hidden = false;
     // Sem back-end não existe e-mail para clicar: segue direto para a nova senha.
