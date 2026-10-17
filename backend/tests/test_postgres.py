@@ -10,12 +10,14 @@ COMO:   Crie um banco SÓ para testes e rode apontando para ele (o teste recusa 
 import os
 import sys
 import unittest
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import config                                                    # noqa: E402
 
 CFG = config.carregar_config()
+SQL_DADOS_TESTE = Path(__file__).resolve().parent / 'dados_teste.sql'
 try:
     import psycopg2                                              # noqa: F401
     PRONTO = CFG['DB_NAME'].endswith('_teste')
@@ -39,7 +41,7 @@ class TestPostgres(unittest.TestCase):
         conexao = abrir_conexao(CFG)
         with conexao, conexao.cursor() as cursor:
             cursor.execute(config.ARQUIVO_SQL.read_text(encoding='utf-8'))
-            cursor.execute(config.ARQUIVO_SQL_TESTE.read_text(encoding='utf-8'))
+            cursor.execute(SQL_DADOS_TESTE.read_text(encoding='utf-8'))
             cursor.execute("UPDATE usuarios SET senha_hash = %s WHERE email = 'joao@example.com'",
                            (gerar_hash_senha('segredo1'),))
         conexao.close()

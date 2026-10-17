@@ -4,7 +4,7 @@ FUNÇÃO: Cadastra um ESP32 na propriedade de um usuário (dispositivo + 3 senso
         que o ESP32 deve enviar no cabeçalho X-Chave-Dispositivo. Se o dispositivo já existe,
         apenas mostra a chave de novo. A chave não fica no banco: é calculada a partir de
         CHAVE_DISPOSITIVOS (do .env) e do código. Trocar CHAVE_DISPOSITIVOS invalida TODAS as chaves.
-USO:    python scripts/cadastrar_dispositivo.py --email joao@example.com --codigo ESP32-001
+USO:    python scripts/cadastrar_dispositivo.py --email usuario@exemplo.com --codigo ESP32-001
 """
 import argparse
 import sys

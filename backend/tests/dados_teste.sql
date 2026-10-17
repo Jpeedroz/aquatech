@@ -1,20 +1,5 @@
--- ============================================================
--- AQUATECH - DADOS DE TESTE (OPCIONAL)
--- ============================================================
---
--- Não faz parte da estrutura do banco. Use só para ver telas e
--- gráficos no modo API sem o ESP32. Rode DEPOIS de
--- aquatech_database.sql (o Docker NÃO executa este arquivo):
---
---     python scripts/init_db.py --recriar --com-dados-teste
---
--- ATENÇÃO: 'senha_teste_hash' NÃO é um hash válido. Para entrar
--- com joao@example.com defina uma senha real:
---
---     python scripts/init_db.py --definir-senha-teste
---
--- ============================================================
-
+-- Massa de dados do teste test_postgres.py (roda depois de database/aquatech_database.sql).
+-- 'senha_teste_hash' não é um hash válido: o teste grava uma senha real em joao@example.com.
 
 -- ============================================================
 -- 1. USUÁRIO DE TESTE

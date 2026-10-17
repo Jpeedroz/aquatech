@@ -12,7 +12,6 @@ PASTA_BACKEND = Path(__file__).resolve().parent
 RAIZ_PROJETO = PASTA_BACKEND.parent
 PASTA_FRONTEND = RAIZ_PROJETO / 'frontend'
 ARQUIVO_SQL = RAIZ_PROJETO / 'database' / 'aquatech_database.sql'
-ARQUIVO_SQL_TESTE = RAIZ_PROJETO / 'database' / 'dados_teste.sql'
 
 # Variáveis já definidas no sistema têm prioridade sobre o arquivo .env
 load_dotenv(PASTA_BACKEND / '.env')

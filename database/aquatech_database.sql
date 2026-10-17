@@ -1,21 +1,4 @@
--- ============================================================
--- AQUATECH - BANCO DE DADOS (PostgreSQL 11 ou superior)
--- ============================================================
---
--- Versão ajustada às necessidades do front-end (telas de Login,
--- Cadastro, Dashboard, Histórico, Irrigações, Consumo,
--- Configurações e Recuperação de senha).
---
--- Observação sobre fuso horário: as colunas TIMESTAMP não guardam
--- fuso. Recomenda-se que o Flask abra cada conexão com:
---     SET TIME ZONE 'America/Fortaleza';
---
--- ============================================================
-
-
--- ============================================================
--- 1. LIMPEZA
--- ============================================================
+-- AQUATECH - estrutura do banco (PostgreSQL 11 ou superior)
 
 DROP VIEW IF EXISTS resumo_dashboard;
 DROP VIEW IF EXISTS consumo_diario;
@@ -31,11 +14,6 @@ DROP TABLE IF EXISTS usuarios CASCADE;
 
 DROP FUNCTION IF EXISTS atualizar_timestamp() CASCADE;
 
-
--- ============================================================
--- 2. FUNÇÃO AUXILIAR: atualizar "atualizado_em" automaticamente
--- ============================================================
-
 CREATE FUNCTION atualizar_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -43,22 +21,6 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
-
--- ============================================================
--- 3. USUÁRIOS
--- ============================================================
---
--- telefone:
---   usado no cadastro e em Configurações > Minha conta.
---
--- senha_alterada_em:
---   data da última troca de senha. O Flask recusa sessões/tokens
---   emitidos ANTES desta data (invalida sessões antigas).
---
--- O hash da senha é gerado pelo Flask. A senha nunca é guardada.
---
--- ============================================================
 
 CREATE TABLE usuarios (
     id SERIAL PRIMARY KEY,
@@ -78,37 +40,12 @@ CREATE TABLE usuarios (
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- E-mail único sem diferenciar maiúsculas de minúsculas
--- (Joao@x.com e joao@x.com são o mesmo e-mail).
 CREATE UNIQUE INDEX ux_usuarios_email
 ON usuarios (LOWER(email));
 
 CREATE TRIGGER trg_usuarios_atualizado
 BEFORE UPDATE ON usuarios
 FOR EACH ROW EXECUTE FUNCTION atualizar_timestamp();
-
-
--- ============================================================
--- 4. PROPRIEDADE
--- ============================================================
---
--- Cada usuário possui UMA propriedade (o sistema trabalha com
--- usuario_id -> propriedade_id). O mesmo registro alimenta o
--- cadastro (etapa 2) e Configurações > Minha propriedade.
---
--- limite_umidade:
---   umidade (%) ABAIXO da qual a irrigação LIGA.
---
--- limite_umidade_desliga:
---   umidade (%) em que a irrigação DESLIGA.
---   Precisa ser maior que limite_umidade.
---
--- O Dashboard desenha as duas linhas ("Liga 18%" e "Desliga 30%").
---
--- metodo_irrigacao:
---   as duas opções oferecidas nas telas.
---
--- ============================================================
 
 CREATE TABLE propriedades (
     id SERIAL PRIMARY KEY,
@@ -155,21 +92,6 @@ CREATE TRIGGER trg_propriedades_atualizado
 BEFORE UPDATE ON propriedades
 FOR EACH ROW EXECUTE FUNCTION atualizar_timestamp();
 
-
--- ============================================================
--- 5. ESP32 / DISPOSITIVO
--- ============================================================
---
--- online:
--- TRUE  = ESP32 conectado
--- FALSE = ESP32 desconectado
---
--- irrigacao_ligada:
--- TRUE  = irrigação ligada
--- FALSE = irrigação desligada
---
--- ============================================================
-
 CREATE TABLE dispositivos (
     id SERIAL PRIMARY KEY,
 
@@ -189,11 +111,6 @@ CREATE TABLE dispositivos (
 
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-
--- ============================================================
--- 6. SENSORES
--- ============================================================
 
 CREATE TABLE sensores (
     id SERIAL PRIMARY KEY,
@@ -218,11 +135,6 @@ CREATE TABLE sensores (
     UNIQUE(dispositivo_id, tipo)
 );
 
-
--- ============================================================
--- 7. LEITURAS DOS SENSORES
--- ============================================================
-
 CREATE TABLE leituras_sensores (
     id SERIAL PRIMARY KEY,
 
@@ -235,19 +147,6 @@ CREATE TABLE leituras_sensores (
     hora_leitura TIMESTAMP NOT NULL
         DEFAULT CURRENT_TIMESTAMP
 );
-
-
--- ============================================================
--- 8. HISTÓRICO DAS IRRIGAÇÕES
--- ============================================================
---
--- Cada registro representa um período em que a irrigação
--- ficou ligada. Enquanto encerrado_em for NULL, a irrigação
--- está em andamento.
---
--- O estado atual fica em dispositivos.irrigacao_ligada.
---
--- ============================================================
 
 CREATE TABLE eventos_irrigacao (
     id SERIAL PRIMARY KEY,
@@ -294,19 +193,6 @@ CREATE TABLE eventos_irrigacao (
     )
 );
 
-
--- ============================================================
--- 9. RECUPERAÇÃO DE SENHA
--- ============================================================
---
--- Fluxo: o usuário pede o link -> o Flask cria um token aleatório,
--- guarda SOMENTE o hash dele aqui e envia o token por e-mail.
--- Ao abrir o link, o Flask confere: o hash existe, não expirou
--- (expira_em) e ainda não foi usado (usado_em IS NULL).
--- Ao salvar a nova senha, usado_em é preenchido (uso único).
---
--- ============================================================
-
 CREATE TABLE tokens_recuperacao_senha (
     id SERIAL PRIMARY KEY,
 
@@ -322,16 +208,6 @@ CREATE TABLE tokens_recuperacao_senha (
 
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-
--- ============================================================
--- 10. TROCA DE E-MAIL COM CONFIRMAÇÃO
--- ============================================================
---
--- O e-mail em usuarios SÓ muda depois que o usuário clica no
--- link enviado para o NOVO endereço (confirmado_em preenchido).
---
--- ============================================================
 
 CREATE TABLE solicitacoes_troca_email (
     id SERIAL PRIMARY KEY,
@@ -351,11 +227,6 @@ CREATE TABLE solicitacoes_troca_email (
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
--- ============================================================
--- 11. ÍNDICES
--- ============================================================
-
 CREATE INDEX idx_dispositivos_propriedade
 ON dispositivos(propriedade_id);
 
@@ -368,7 +239,6 @@ ON leituras_sensores(sensor_id, hora_leitura);
 CREATE INDEX idx_eventos_dispositivo_data
 ON eventos_irrigacao(dispositivo_id, iniciado_em);
 
--- Um dispositivo não pode ter duas irrigações abertas ao mesmo tempo
 CREATE UNIQUE INDEX ux_evento_aberto_por_dispositivo
 ON eventos_irrigacao(dispositivo_id)
 WHERE encerrado_em IS NULL;
@@ -378,25 +248,6 @@ ON tokens_recuperacao_senha(usuario_id);
 
 CREATE INDEX idx_troca_email_usuario
 ON solicitacoes_troca_email(usuario_id);
-
--- (O índice de propriedades por usuário já existe pela
---  restrição UNIQUE em propriedades.usuario_id.)
-
-
--- ============================================================
--- 12. CONSUMO DIÁRIO
--- ============================================================
---
--- O consumo diário é calculado a partir dos eventos
--- de irrigação (não é duplicado em outra tabela).
---
--- Alimenta: cartões e gráfico da tela "Consumo de água"
--- (hoje, 7 dias, 30 dias, total, período personalizado,
--- maior, menor e média).
---
--- Só existem linhas para os dias que tiveram irrigação.
---
--- ============================================================
 
 CREATE VIEW consumo_diario AS
 
@@ -418,17 +269,6 @@ JOIN dispositivos d
 GROUP BY
     d.propriedade_id,
     DATE(e.iniciado_em);
-
-
--- ============================================================
--- 13. VIEW RESUMIDA DO DASHBOARD
--- ============================================================
---
--- Uma linha por usuário/propriedade/dispositivo.
--- LEFT JOIN: um usuário recém-cadastrado (sem propriedade ou
--- sem ESP32) também aparece, com os campos vazios (NULL).
---
--- ============================================================
 
 CREATE VIEW resumo_dashboard AS
 
