@@ -1,0 +1,84 @@
+### AquaSmart - exemplos de requisições (extensão "REST Client" do VS Code: clique em "Send Request").
+### Servidor rodando em http://localhost:5000. O cookie de login é guardado automaticamente.
+
+@host = http://localhost:5000
+
+### Conferir se a API e o banco estão no ar
+GET {{host}}/api/saude
+
+### 1) Cadastro (etapa 1) - devolve o "token" usado na etapa 2
+POST {{host}}/api/usuarios
+Content-Type: application/json
+
+{ "nome": "Maria Silva", "email": "maria@example.com", "telefone": "(88) 98888-7777", "senha": "senha123" }
+
+### 2) Cadastro da propriedade (etapa 2) - cole o token da resposta anterior
+POST {{host}}/api/propriedades
+Content-Type: application/json
+
+{ "token_cadastro": "COLE_O_TOKEN_AQUI", "nome": "Sítio Esperança", "localizacao": "Crato - CE",
+  "area_hectares": 1.5, "cultura": "Milho", "metodo_irrigacao": "Gravidade" }
+
+### 3) Login
+POST {{host}}/api/login
+Content-Type: application/json
+
+{ "email": "maria@example.com", "senha": "senha123" }
+
+### Dados da conta e da propriedade
+GET {{host}}/api/usuario
+
+###
+GET {{host}}/api/propriedade
+
+### Dashboard (hoje)
+GET {{host}}/api/dashboard
+
+### Histórico, irrigações e consumo por período
+GET {{host}}/api/historico?inicio=2026-10-01&fim=2026-10-15
+
+###
+GET {{host}}/api/irrigacoes?inicio=2026-10-01&fim=2026-10-15
+
+###
+GET {{host}}/api/consumo?inicio=2026-10-01&fim=2026-10-15
+
+###
+GET {{host}}/api/consumo/resumo
+
+### Sair
+POST {{host}}/api/logout
+Content-Type: application/json
+
+{}
+
+### ------------------------------------------------------------
+### ESP32 (simulado). A chave aparece ao rodar:
+###   python scripts/cadastrar_dispositivo.py --email maria@example.com --codigo ESP32-001
+### ------------------------------------------------------------
+@chave = COLE_A_CHAVE_DO_DISPOSITIVO
+
+### Enviar leituras (todos os campos são opcionais, mas envie ao menos um)
+POST {{host}}/api/dispositivos/ESP32-001/leituras
+Content-Type: application/json
+X-Chave-Dispositivo: {{chave}}
+
+{ "umidade_solo": 16.5, "temperatura": 31.2, "vazao_agua": 0 }
+
+### Buscar limites e modo de irrigação
+GET {{host}}/api/dispositivos/ESP32-001/configuracao
+X-Chave-Dispositivo: {{chave}}
+
+### Registrar início da irrigação
+PUT {{host}}/api/dispositivos/ESP32-001/irrigacao
+Content-Type: application/json
+X-Chave-Dispositivo: {{chave}}
+
+{ "ligada": true, "umidade": 16.5 }
+
+### Registrar fim da irrigação (agua_utilizada_litros é opcional: sem ele, o volume sai das leituras de vazão)
+PUT {{host}}/api/dispositivos/ESP32-001/irrigacao
+Content-Type: application/json
+X-Chave-Dispositivo: {{chave}}
+
+{ "ligada": false, "umidade": 30.0, "agua_utilizada_litros": 45.5 }
