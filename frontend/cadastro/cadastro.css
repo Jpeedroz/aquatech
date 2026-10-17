@@ -1,13 +1,87 @@
-.cad-card { width: 560px; background: #f8fafc; border-radius: 10px; padding: 36px 0 30px; box-shadow: 0 10px 30px rgba(0,0,0,.2); }
-.cad-miolo { width: 380px; margin: 0 auto; }
-.cad-miolo h1 { font-size: 21px; font-weight: 600; }
-.sub { color: var(--cinza); font-size: 11px; margin: 3px 0 16px; }
-.etapas { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; font: 600 10px var(--fonte-titulo); color: #8896a8; }
-.etapa { display: flex; align-items: center; gap: 7px; }
-.etapa b { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: #e6ebf1; color: #8896a8; font-size: 10px; }
-.etapa.ativa { color: var(--verde); } .etapa.ativa b { background: var(--verde); color: #fff; }
-.etapa.feita b { background: #8fd09a; color: #fff; }
-.linha { flex: 1; height: 1px; background: #cfd8e2; }
-form { display: flex; flex-direction: column; gap: 12px; }
-.par { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.rodape-form { text-align: center; font-size: 12px; margin-top: 16px; }
+.cad-card {
+    width: 560px;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 36px 0 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.2);
+}
+
+.cad-miolo {
+    width: 380px;
+    margin: 0 auto;
+}
+
+.cad-miolo h1 {
+    font-size: 21px;
+    font-weight: 600;
+}
+
+.sub {
+    color: var(--cinza);
+    font-size: 11px;
+    margin: 3px 0 16px;
+}
+
+.etapas {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    font: 600 10px var(--fonte-titulo);
+    color: #8896a8;
+}
+
+.etapa {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.etapa b {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #e6ebf1;
+    color: #8896a8;
+    font-size: 10px;
+}
+
+.etapa.ativa {
+    color: var(--verde);
+}
+
+.etapa.ativa b {
+    background: var(--verde);
+    color: #fff;
+}
+
+.etapa.feita b {
+    background: #8fd09a;
+    color: #fff;
+}
+
+.linha {
+    flex: 1;
+    height: 1px;
+    background: #cfd8e2;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.par {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.rodape-form {
+    text-align: center;
+    font-size: 12px;
+    margin-top: 16px;
+}
