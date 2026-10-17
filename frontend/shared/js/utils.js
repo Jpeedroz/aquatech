@@ -1,11 +1,8 @@
 /* ============================================================
    utils.js — funções gerais usadas por várias telas.
-   (datas, números, ícones, menu lateral, filtro de período,
-   mensagens e janela modal)
+   (números, ícones, menu lateral, mensagens e janela modal;
+   datas e períodos ficam em tempo.js, filtros em componentes.js)
    ============================================================ */
-
-const MESES_NOME = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-const MESES_ABREV = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
 
 // Listas usadas no cadastro da propriedade e em Configurações
 const CULTURAS = ['Cebola','Milho','Feijão','Tomate','Mandioca','Pimentão','Banana','Capim','Outra'];
@@ -14,23 +11,14 @@ const METODOS_IRRIGACAO = [
   { valor: 'Gravidade',    titulo: 'Gravidade',    descricao: 'Irrigação por gravidade' }
 ];
 
-/* ---------- datas ---------- */
+/* ---------- datas ----------
+   Toda a lógica de data/período fica em tempo.js (fuso America/Fortaleza). */
 function dois(n) { return String(n).padStart(2, '0'); }
-function paraISO(d) { return `${d.getFullYear()}-${dois(d.getMonth() + 1)}-${dois(d.getDate())}`; }          // 2026-10-07
-function paraTimestamp(d) { return `${paraISO(d)}T${dois(d.getHours())}:${dois(d.getMinutes())}:00`; }      // como o TIMESTAMP do banco
-function inicioDoDia(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
-function somarDias(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
-function dataBR(d) { return `${dois(d.getDate())}/${dois(d.getMonth() + 1)}/${d.getFullYear()}`; }
-function horaBR(d) { return `${dois(d.getHours())}:${dois(d.getMinutes())}`; }
-function horaCurta(d) { const m = d.getMinutes(); return m ? `${d.getHours()}h${dois(m)}` : `${d.getHours()}h`; }
-function diaMesAbrev(d) { return `${d.getDate()} ${MESES_ABREV[d.getMonth()]}`; }                           // 31 AGO
-function diaMesCurto(d) { const m = MESES_NOME[d.getMonth()].slice(0, 3); return `${d.getDate()} ${m[0].toUpperCase()}${m.slice(1)}`; } // 31 Ago
-function diaMesExtenso(d) { return `${d.getDate()} de ${MESES_NOME[d.getMonth()]}`; }                       // 31 de agosto
-function dataISOparaDate(s) { return new Date(s + 'T00:00:00'); }
 
 /* ---------- números e textos ---------- */
-function formatarNumero(n, casas = 0) { return Number(n).toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas }); }
-function formatarLitros(n) { return formatarNumero(n, 0) + ' L'; }
+function formatarNumero(n, casas = 0, maxCasas = casas) { return Number(n).toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: Math.max(casas, maxCasas) }); }
+// litros: mostra até 1 casa decimal (150,5 L), para que as somas das telas fechem exatamente
+function formatarLitros(n) { return formatarNumero(n, 0, 1) + ' L'; }
 function formatarDuracao(min) {
   if (min == null) return '—';
   const h = Math.floor(min / 60), m = min % 60;
@@ -39,7 +27,7 @@ function formatarDuracao(min) {
 }
 function media(lista) { return lista.length ? lista.reduce((a, b) => a + b, 0) / lista.length : null; }
 function primeiroNome(nome) { return (nome || '').trim().split(/\s+/)[0]; }
-function saudacao() { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'; }
+function saudacao() { const h = +Tempo.agora().slice(11, 13); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'; }   // hora de Fortaleza
 function validarEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 
 function aplicarMascaraTelefone(input) {
@@ -81,20 +69,21 @@ function montarLayout(paginaAtual) {
     ['configuracoes', 'Configurações', 'gear']
   ];
   document.getElementById('sidebar').innerHTML = `
-    <img class="sidebar-logo" src="../assets/logos/logo-escuro.png" alt="AquaSmart">
+    <img class="sidebar-logo" src="../assets/logos/logo-sidebar.png" alt="AquaSmart">
     <nav class="menu">
       ${itens.map(([id, texto, ic]) =>
         `<a class="menu-item ${id === paginaAtual ? 'ativo' : ''}" href="../${id}/${id}.html">${icone(ic)}<span>${texto}</span></a>`).join('')}
     </nav>
     <div class="sidebar-rodape">
-      <div class="usuario"><span class="avatar" id="menuAvatar"></span>
-        <div><strong id="menuNome"></strong><small>Proprietário</small></div></div>
+      <a class="usuario ${paginaAtual === 'configuracoes' ? 'ativo' : ''}" id="menuPerfil" href="../configuracoes/configuracoes.html" title="Abrir configurações" aria-label="Abrir configurações do perfil"><span class="avatar" id="menuAvatar"></span>
+        <div><strong id="menuNome"></strong><small>Proprietário</small></div></a>
       <button class="btn-sair" id="btnSair" type="button">${icone('logout')}<span>Sair</span></button>
     </div>`;
   atualizarUsuarioNoMenu(sessao.nome);
   document.getElementById('btnSair').addEventListener('click', sair);   // sair() está em api.js
 }
 function atualizarUsuarioNoMenu(nome) {
+  if (!nome || /^demonstra/i.test(nome.trim())) nome = 'Usuário';       // sessões antigas guardavam "Demonstração"
   document.getElementById('menuNome').textContent = nome;               // textContent evita injeção de HTML
   document.getElementById('menuAvatar').textContent = (nome || '?')[0].toUpperCase();
 }
@@ -131,9 +120,15 @@ function abrirModal({ titulo, texto, campos, textoConfirmar, aoConfirmar }) {
     l.querySelector('span').textContent = c.label;
     const inp = l.querySelector('input');
     inp.type = c.tipo || 'text'; inp.id = 'modal_' + c.id;
+    Object.entries(c.atributos || {}).forEach(([k, v]) => inp.setAttribute(k, v));   // ex.: min, max, step, inputmode
+    if (c.valor != null) inp.value = c.valor;
     areaCampos.appendChild(l);
   });
   const erro = fundo.querySelector('.erro-texto');
+  const aoTeclar = ev => { if (ev.key === 'Escape') fundo.remove(); };
+  document.addEventListener('keydown', aoTeclar);
+  new MutationObserver((_, obs) => { if (!fundo.isConnected) { document.removeEventListener('keydown', aoTeclar); obs.disconnect(); } })
+    .observe(document.body, { childList: true });
   fundo.querySelector('[data-acao=cancelar]').onclick = () => fundo.remove();
   fundo.querySelector('[data-acao=ok]').onclick = async () => {
     const valores = {};
@@ -145,71 +140,4 @@ function abrirModal({ titulo, texto, campos, textoConfirmar, aoConfirmar }) {
     } catch (e) { erro.textContent = e.message; }
   };
   document.body.appendChild(fundo);
-}
-
-/* ---------- período (Hoje / 7 dias / 1 mês / Personalizado) ---------- */
-function resolverPeriodo(tipo, iniStr, fimStr) {
-  const hoje = inicioDoDia(new Date());
-  if (tipo === 'hoje') return { tipo, inicio: hoje, fim: hoje };
-  if (tipo === '7dias') return { tipo, inicio: somarDias(hoje, -6), fim: hoje };
-  if (tipo === '1mes') return { tipo, inicio: somarDias(hoje, -29), fim: hoje };   // últimos 30 dias
-  return { tipo, inicio: dataISOparaDate(iniStr), fim: dataISOparaDate(fimStr) };
-}
-function descreverPeriodo(p) {
-  if (p.tipo === 'hoje') return 'hoje';
-  if (p.tipo === '7dias') return 'nos últimos 7 dias';
-  if (p.tipo === '1mes') return 'nos últimos 30 dias';
-  return `de ${dataBR(p.inicio)} a ${dataBR(p.fim)}`;
-}
-
-/* Cria o filtro dentro de "container" e chama aoMudar(periodo).
-   estilo: 'select' (lista suspensa) ou 'pills' (botões).
-   O período "Hoje" é aplicado logo na criação (padrão). */
-function criarFiltroPeriodo(container, aoMudar, estilo) {
-  const opcoes = [['hoje', 'Hoje'], ['7dias', '7 dias'], ['1mes', '1 mês'], ['personalizado', 'Personalizado']];
-  let atual = 'hoje';
-  container.classList.add('filtro', 'filtro-' + estilo);
-  container.innerHTML = `<div class="filtro-opcoes"></div>
-    <div class="filtro-custom" hidden>
-      <label>Data inicial <input type="date" class="f-ini"></label>
-      <label>Data final <input type="date" class="f-fim"></label>
-      <button type="button" class="btn btn-azul btn-pequeno f-aplicar">Aplicar</button>
-      <span class="erro-texto f-erro"></span>
-    </div>`;
-  const area = container.querySelector('.filtro-opcoes');
-  const custom = container.querySelector('.filtro-custom');
-  const erro = container.querySelector('.f-erro');
-  let controles;
-
-  if (estilo === 'select') {
-    const sel = document.createElement('select');
-    opcoes.forEach(([v, t]) => sel.add(new Option(t, v)));
-    sel.addEventListener('change', () => escolher(sel.value));
-    area.appendChild(sel);
-    controles = () => { sel.value = atual; };
-  } else {
-    const botoes = opcoes.map(([v, t]) => {
-      const b = document.createElement('button');
-      b.type = 'button'; b.textContent = t; b.dataset.valor = v;
-      b.addEventListener('click', () => escolher(v));
-      area.appendChild(b); return b;
-    });
-    controles = () => botoes.forEach(b => b.classList.toggle('ativo', b.dataset.valor === atual));
-  }
-
-  function escolher(tipo) {
-    atual = tipo; controles(); erro.textContent = '';
-    if (tipo === 'personalizado') { custom.hidden = false; return; }
-    custom.hidden = true;
-    aoMudar(resolverPeriodo(tipo));
-  }
-  container.querySelector('.f-aplicar').addEventListener('click', () => {
-    const ini = container.querySelector('.f-ini').value, fim = container.querySelector('.f-fim').value;
-    if (!ini || !fim) { erro.textContent = 'Preencha a data inicial e a data final.'; return; }
-    if (ini > fim) { erro.textContent = 'A data inicial deve ser anterior ou igual à data final.'; return; }
-    erro.textContent = '';
-    aoMudar(resolverPeriodo('personalizado', ini, fim));
-  });
-  controles();
-  aoMudar(resolverPeriodo('hoje'));
 }

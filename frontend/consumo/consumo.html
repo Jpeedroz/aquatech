@@ -14,30 +14,38 @@
       <header class="topbar"><h1 id="tituloPagina"></h1><p id="subtituloPagina"></p></header>
       <section class="conteudo">
         <div class="grade-kpi">
-          <article class="card kpi"><div class="kpi-rotulo" id="r1"></div><div class="kpi-valor" id="cHoje">—</div></article>
-          <article class="card kpi"><div class="kpi-rotulo" id="r2"></div><div class="kpi-valor" id="c7">—</div></article>
-          <article class="card kpi"><div class="kpi-rotulo" id="r3"></div><div class="kpi-valor" id="c30">—</div></article>
-          <article class="card kpi"><div class="kpi-rotulo" id="r4"></div><div class="kpi-valor" id="cTotal">—</div></article>
+          <article class="card kpi"><div class="kpi-rotulo"><span id="r1"></span><em class="kpi-tag">fixo</em></div><div class="kpi-valor" id="cHoje">—</div><div class="kpi-nota">dia de hoje</div></article>
+          <article class="card kpi"><div class="kpi-rotulo"><span id="r2"></span><em class="kpi-tag">fixo</em></div><div class="kpi-valor" id="c7">—</div><div class="kpi-nota">hoje e os 6 dias anteriores</div></article>
+          <article class="card kpi"><div class="kpi-rotulo"><span id="r3"></span><em class="kpi-tag">fixo</em></div><div class="kpi-valor" id="c30">—</div><div class="kpi-nota">hoje e os 29 dias anteriores</div></article>
+          <article class="card kpi"><div class="kpi-rotulo"><span id="r4"></span><em class="kpi-tag">fixo</em></div><div class="kpi-valor" id="cTotal">—</div><div class="kpi-nota">todo o histórico guardado</div></article>
         </div>
         <article class="card grafico-consumo">
           <div class="grafico-topo">
             <div><h2>Consumo de água</h2><p class="sub" id="subGrafico"></p></div>
             <div id="filtro"></div>
           </div>
-          <div id="grafico"></div>
+          <div id="grafico" aria-live="polite"></div>
+          <p class="cobertura" id="cobertura"></p>
         </article>
-        <div class="resumo-tres">
-          <article class="resumo maior"><small>MAIOR CONSUMO</small><strong id="maiorDia">—</strong><span id="maiorLitros"></span></article>
-          <article class="resumo menor"><small>MENOR CONSUMO</small><strong id="menorDia">—</strong><span id="menorLitros"></span></article>
-          <article class="resumo media"><small>MÉDIA DIÁRIA</small><strong id="mediaDiaria">—</strong><span id="mediaTexto"></span></article>
+        <div class="resumo-tres resumo-consumo">
+          <article class="resumo cons-maior"><small>MAIOR CONSUMO</small><strong id="maiorLitros">—</strong><span id="maiorDia"></span></article>
+          <article class="resumo cons-menor"><small>MENOR CONSUMO</small><strong id="menorLitros">—</strong><span id="menorDia"></span></article>
+          <article class="resumo cons-media"><small>MÉDIA DIÁRIA <em>(dias com consumo)</em></small><strong id="mediaDiaria">—</strong><span id="mediaTexto"></span></article>
         </div>
+        <div id="paginacaoDias"></div>
       </section>
     </main>
   </div>
   <script src="../shared/js/utils.js"></script>
   <script src="../shared/js/session.js"></script>
+  <script src="../shared/js/tempo.js"></script>
+  <script src="../shared/js/config.js"></script>
+  <script src="../shared/js/demo.js"></script>
+  <script src="../shared/js/analise.js"></script>
   <script src="../shared/js/mockData.js"></script>
   <script src="../shared/js/api.js"></script>
+  <script src="../shared/js/componentes.js"></script>
+  <script src="../shared/js/graficos.js"></script>
   <script src="consumo.js"></script>
 </body>
 </html>

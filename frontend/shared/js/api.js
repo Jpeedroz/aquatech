@@ -1,9 +1,9 @@
 /* ============================================================
    api.js — ÚNICO ponto de acesso a dados do front-end.
 
-   As telas chamam estas funções (getDashboardData, login...).
-   FASE 1: USAR_MOCK = true  → respostas vêm de mockData.js.
-   FASE 2: USAR_MOCK = false → o mesmo código usa fetch() na API Flask.
+   As telas chamam estas funções (getHistoricoData, login...).
+   Modo DEMO (config.js): respostas vêm de mockData.js e demo.js.
+   Modo API (config.js): o mesmo código usa fetch() na API Flask.
    Assim as telas NÃO precisam ser refeitas.
 
    O front-end nunca acessa o PostgreSQL: só conversa com a API.
@@ -11,19 +11,31 @@
    no Flask (por isso as rotas não recebem usuario_id na URL).
    ============================================================ */
 
-const USAR_MOCK = true;
-const API_BASE = '/api';
+// USAR_MOCK vem de config.js: true = modo DEMO (mockData.js/demo.js), false = modo API (fetch).
+// Os dois modos nunca se misturam e nenhum deles é "desligado" para o outro funcionar.
+const API_BASE = window.location.port === '5000' ? '/api' : `http://${window.location.hostname}:5000/api`;
 
 async function requisicao(caminho, opcoes = {}) {
-  const resposta = await fetch(API_BASE + caminho, {
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',                       // envia o cookie de sessão do Flask
-    ...opcoes
-  });
+  let resposta;
+  try {
+    resposta = await fetch(API_BASE + caminho, {
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',                       // envia o cookie de sessão do Flask
+      ...opcoes
+    });
+  } catch (e) {
+    if (e.name === 'AbortError') throw e;           // pedido cancelado de propósito (filtro trocado)
+    throw new Error('Não foi possível conectar ao servidor. Verifique se o back-end está em execução.');
+  }
   if (!resposta.ok) {
     const erro = await resposta.json().catch(() => ({}));
+    if (resposta.status === 401 && caminho !== '/login') {           // sessão vencida: volta ao login
+      limparSessao();
+      window.location.replace('../login/login.html');
+    }
     const e = new Error(erro.mensagem || 'Erro na comunicação com o servidor.');
     e.campo = erro.campo || null;               // 'email' ou 'senha' quando o Flask indicar o campo com problema
+    e.status = resposta.status;
     throw e;
   }
   return resposta.json();
@@ -33,6 +45,13 @@ const put = (caminho, corpo) => requisicao(caminho, { method: 'PUT', body: JSON.
 const idUsuario = () => getSessao().usuario_id;
 const idPropriedade = () => mockPropriedadeDoUsuario(idUsuario())?.id;   // só usado no mock
 
+/* Troca entre modo demo e modo API. Encerra a sessão para NÃO misturar dados de um modo no outro. */
+function trocarModoDados(novo) {
+  try { localStorage.setItem(MODO_CHAVE, novo); } catch (e) { /* ignora */ }
+  limparSessao();
+  window.location.replace('../login/login.html');
+}
+
 /* ---------- autenticação e cadastro ---------- */
 // Envia email e senha. Resposta esperada: { usuario_id, propriedade_id, nome, email, token }
 async function login(email, senha) {
@@ -40,7 +59,7 @@ async function login(email, senha) {
 }
 // O HASH da senha é gerado pelo Back-end, nunca aqui.
 async function cadastrarUsuario({ nome, email, telefone, senha }) {
-  return USAR_MOCK ? mockCadastrarUsuario({ nome, email, telefone }) : post('/usuarios', { nome, email, telefone, senha });
+  return USAR_MOCK ? mockCadastrarUsuario({ nome, email, telefone, senha }) : post('/usuarios', { nome, email, telefone, senha });
 }
 // Etapa 2 do cadastro: ainda não há login, então usa o usuário criado na etapa 1.
 // O Flask deve validar o token de cadastro devolvido pela etapa 1.
@@ -83,40 +102,40 @@ async function solicitarTrocaEmail(novoEmail, senhaAtual) {                   //
   return post('/usuario/email', { novo_email: novoEmail, senha_atual: senhaAtual });
 }
 
-/* ---------- dados das telas (datas no formato AAAA-MM-DD) ---------- */
+/* ---------- dados das telas (datas no formato AAAA-MM-DD) ----------
+   "opcoes.signal" (AbortSignal) cancela o pedido quando o usuário troca o filtro. */
 // GET /api/dashboard → { resumo (colunas de resumo_dashboard), leituras_umidade (hoje), eventos (hoje) }
-async function getDashboardData() {
-  if (!USAR_MOCK) return requisicao('/dashboard');
-  const hoje = paraISO(new Date()), pid = idPropriedade();
-  return {
-    resumo: mockResumoDashboard(idUsuario()),
-    leituras_umidade: pid ? mockLeiturasPeriodo(pid, hoje, hoje).filter(l => l.tipo === 'umidade_solo') : [],
-    eventos: pid ? mockEventosPeriodo(pid, hoje, hoje) : []
-  };
+// Só o "resumo" é usado: leituras e eventos do período vêm de getHistoricoData (um único lugar).
+async function getResumoPainel(opcoes = {}) {
+  if (!USAR_MOCK) return (await requisicao('/dashboard', { signal: opcoes.signal })).resumo;
+  return mockResumoDashboard(idUsuario());
 }
-// GET /api/historico?inicio=&fim= → { leituras: [{sensor_id,tipo,valor,hora_leitura}], eventos: [...] }
-async function getHistoricoData(inicio, fim) {
-  if (!USAR_MOCK) return requisicao(`/historico?inicio=${inicio}&fim=${fim}`);
+// GET /api/historico?inicio=&fim= → { leituras: [{sensor_id,tipo,valor,hora_leitura,teste?}], eventos: [...] }
+// As leituras incluem umidade, temperatura e vazão (a vazão serve para o consumo acumulado).
+async function getHistoricoData(inicio, fim, opcoes = {}) {
+  if (!USAR_MOCK) return requisicao(`/historico?inicio=${inicio}&fim=${fim}`, { signal: opcoes.signal });
   const pid = idPropriedade();
   return { leituras: pid ? mockLeiturasPeriodo(pid, inicio, fim) : [], eventos: pid ? mockEventosPeriodo(pid, inicio, fim) : [] };
 }
 // GET /api/irrigacoes?inicio=&fim= → { eventos: [linhas de eventos_irrigacao] }
-async function getIrrigacoesData(inicio, fim) {
-  if (!USAR_MOCK) return requisicao(`/irrigacoes?inicio=${inicio}&fim=${fim}`);
+// A tela Consumo usa ESTES MESMOS eventos para somar o consumo por dia.
+async function getIrrigacoesData(inicio, fim, opcoes = {}) {
+  if (!USAR_MOCK) return requisicao(`/irrigacoes?inicio=${inicio}&fim=${fim}`, { signal: opcoes.signal });
   const pid = idPropriedade();
   return { eventos: pid ? mockEventosPeriodo(pid, inicio, fim) : [] };
 }
-// GET /api/consumo?inicio=&fim= → { dias: [linhas da view consumo_diario] }
-async function getConsumoData(inicio, fim) {
-  if (!USAR_MOCK) return requisicao(`/consumo?inicio=${inicio}&fim=${fim}`);
-  const pid = idPropriedade();
-  return { dias: pid ? mockConsumoDiario(pid, inicio, fim) : [] };
-}
 // GET /api/consumo/resumo → { hoje, ultimos_7_dias, ultimos_30_dias, total }
-async function getConsumoResumo() {
-  if (!USAR_MOCK) return requisicao('/consumo/resumo');
+async function getConsumoResumo(opcoes = {}) {
+  if (!USAR_MOCK) return requisicao('/consumo/resumo', { signal: opcoes.signal });
   const pid = idPropriedade();
   return pid ? mockResumoConsumo(pid) : { hoje: 0, ultimos_7_dias: 0, ultimos_30_dias: 0, total: 0 };
+}
+// GET /api/dias-disponiveis?fonte=leituras|eventos|consumo → { dias: ["AAAA-MM-DD", ...] }
+// Alimenta os calendários: só dias que têm dado podem ser escolhidos.
+async function getDiasDisponiveis(fonte, opcoes = {}) {
+  if (!USAR_MOCK) return (await requisicao(`/dias-disponiveis?fonte=${fonte}`, { signal: opcoes.signal })).dias;
+  const pid = idPropriedade();
+  return pid ? mockDiasDisponiveis(pid, fonte) : [];
 }
 
 /* ---------- recuperação de senha ---------- */

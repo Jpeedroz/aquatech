@@ -1,14 +1,22 @@
+/* Cores do gráfico de consumo (as MESMAS usadas em graficos.js: maior, menor e demais barras) */
+:root { --cons-max: #1d68a3; --cons-min: #a9d4ef; --cons-barra: #3a9bd5;
+  /* filtro de período em azul, combinando com o gráfico: base azulada clara e degradê índigo → azul do gráfico no selecionado */
+  --filtro-base: #e6f0f8; --filtro-borda: #d0e2f1; --filtro-ativo: linear-gradient(90deg, #182065, #0b7bbd); }
 .grafico-consumo { margin-top: 20px; padding: 22px 26px 18px; }
-.grafico-topo { display: flex; justify-content: space-between; align-items: flex-start; }
+.grafico-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 14px; }
 .grafico-topo h2 { font-size: 14px; font-weight: 600; }
-.sub { font-size: 10px; color: var(--cinza); margin-top: 3px; }
-.grafico-topo .filtro { align-items: flex-end; }
-#grafico svg { width: 100%; height: auto; display: block; margin-top: 8px; }
-.resumo-tres { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-top: 20px; }
-.resumo { border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 3px; border: 1px solid; }
-.resumo small { font-size: 9px; font-weight: 700; letter-spacing: .3px; }
-.resumo strong { font: 600 13px var(--fonte-titulo); color: var(--texto); }
-.resumo span { font-size: 11px; }
-.resumo.maior { background: #ecfbef; border-color: #7ed38e; } .resumo.maior small, .resumo.maior span { color: var(--verde); }
-.resumo.menor { background: #eaf6fd; border-color: #8cc9ee; } .resumo.menor small, .resumo.menor span { color: var(--azul); }
-.resumo.media { background: #eaf1fb; border-color: #d3e0f2; } .resumo.media small, .resumo.media span { color: var(--cinza); }
+.sub { font-size: 11px; color: var(--cinza); margin-top: 4px; }
+
+/* Tags de resumo do Consumo: nome (pequeno) → VALOR (destaque, centro) → data/complemento (pequeno) */
+.resumo-consumo .resumo { align-items: center; text-align: center; gap: 2px; padding: 10px 16px; }
+.resumo-consumo .resumo small { display: flex; align-items: center; gap: 6px; justify-content: center; color: var(--cinza); }
+.resumo-consumo .resumo small::before { content: ''; width: 9px; height: 9px; border-radius: 3px; background: var(--cor); flex-shrink: 0; }
+.resumo-consumo .resumo strong { font: 700 20px var(--fonte-titulo); line-height: 1.2; color: var(--cor-valor); }
+.resumo-consumo .resumo span { font-size: 11px; color: var(--cinza); }
+.resumo-consumo .cons-maior { --cor: var(--cons-max); --cor-valor: var(--cons-max); background: #e3eef8; border-color: var(--cons-max); }
+.resumo-consumo .cons-maior small { color: #14456e; }
+.resumo-consumo .cons-menor { --cor: var(--cons-min); --cor-valor: #14213d; background: #eef7fd; border-color: var(--cons-min); }
+.resumo-consumo .cons-media { --cor: var(--cons-barra); --cor-valor: #14213d; background: #eaf1fb; border-color: #d3e0f2; }
+
+.cobertura { font-size: 11px; color: var(--cinza); text-align: center; margin-top: 8px; }
+.cobertura:empty { display: none; }

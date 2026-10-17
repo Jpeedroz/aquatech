@@ -1,0 +1,147 @@
+[
+  {
+    "nome": "00 Login de demonstração: usuario@exemplo.com / 123456; senha errada e conta inexistente são recusadas",
+    "ok": true,
+    "ms": 1856
+  },
+  {
+    "nome": "01 Hoje: 4 telas coerentes, sem paginação diária",
+    "ok": true,
+    "ms": 1327
+  },
+  {
+    "nome": "02 7 dias: paginação diária (mais recente primeiro) sem recarregar a página",
+    "ok": true,
+    "ms": 2719
+  },
+  {
+    "nome": "03 1 mês: totais batem entre Consumo, Irrigações e o cartão de 30 dias",
+    "ok": true,
+    "ms": 1895
+  },
+  {
+    "nome": "04 Personalizado: calendário, datas futuras/sem dados bloqueadas, validação e aplicação",
+    "ok": true,
+    "ms": 2671
+  },
+  {
+    "nome": "05 Anterior/Próximo: desabilitados nos limites e reiniciados ao trocar o filtro",
+    "ok": true,
+    "ms": 1837
+  },
+  {
+    "nome": "06 Estabilidade: os dados não mudam ao recarregar nem ao trocar de página; nada do demo fica no navegador",
+    "ok": true,
+    "ms": 2831
+  },
+  {
+    "nome": "07 Dashboard e Histórico mostram a MESMA leitura atual",
+    "ok": true,
+    "ms": 1025
+  },
+  {
+    "nome": "08 Irrigações ↔ Histórico: mesmos eventos, mesmos horários, em todos os dias de 7 dias",
+    "ok": true,
+    "ms": 2317
+  },
+  {
+    "nome": "09 Consumo diário = soma dos eventos (Consumo, Irrigações e Histórico iguais por dia)",
+    "ok": true,
+    "ms": 2901
+  },
+  {
+    "nome": "10 Totais fixos (7 e 30 dias) = soma exata dos mesmos eventos filtrados",
+    "ok": true,
+    "ms": 641
+  },
+  {
+    "nome": "11 Calendários: cada tela marca os dias com dados da sua fonte (dias sem registro continuam escolhíveis)",
+    "ok": true,
+    "ms": 5724
+  },
+  {
+    "nome": "12 Editar MOCK_AJUSTES em mockData.js reflete nas quatro páginas (e só elas)",
+    "ok": true,
+    "ms": 2026
+  },
+  {
+    "nome": "13 Gráfico de umidade: 13 pontos 06–18h ligados, 7 rótulos, tooltip em TODOS os pontos (mouse e teclado); consumo em litros",
+    "ok": true,
+    "ms": 1853
+  },
+  {
+    "nome": "14 Período 01/08–19/10 sem lacunas: todos os dias com 13 leituras e irrigação; Histórico navega por todos",
+    "ok": true,
+    "ms": 5516
+  },
+  {
+    "nome": "15 Só existe paginação por dia (e por semana no Consumo); não há paginação de linhas nem inserção manual de leituras",
+    "ok": true,
+    "ms": 2663
+  },
+  {
+    "nome": "19 Data de referência 19/10/2026: Hoje, 7 dias, 1 mês, 13 medições até 18h (computador em 16/10)",
+    "ok": true,
+    "ms": 1912
+  },
+  {
+    "nome": "20 Layout: filtros ao lado do título da seção principal; tags e paginação abaixo (Dashboard, Histórico, Irrigações, Consumo)",
+    "ok": true,
+    "ms": 9844
+  },
+  {
+    "nome": "22 Dashboard: tags Mínima/Média/Máxima do período inteiro; Consumo e Irrigações: subtítulos simples, tags, ordem e Antes/Depois",
+    "ok": true,
+    "ms": 6563
+  },
+  {
+    "nome": "26 Perfil do menu lateral: destaque ao passar o mouse e clique leva às Configurações",
+    "ok": true,
+    "ms": 1700
+  },
+  {
+    "nome": "27 Consumo: paginação SEMANAL (blocos de até 7 dias), indicadores do período inteiro, cores e hierarquia das tags",
+    "ok": true,
+    "ms": 34381
+  },
+  {
+    "nome": "28 Demonstração em 19/10/2026: >= 2 medições no dia, as mesmas em todos os filtros e telas, sem duplicar nem mudar",
+    "ok": true,
+    "ms": 5942
+  },
+  {
+    "nome": "29 Calendário do Personalizado: qualquer dia até hoje pode ser escolhido (sem registros = aviso), futuros bloqueados",
+    "ok": true,
+    "ms": 2051
+  },
+  {
+    "nome": "21 Cenário seco e quente: temperaturas altas, irrigação frequente e coerente com a área da propriedade",
+    "ok": true,
+    "ms": 264
+  },
+  {
+    "nome": "17 Modos demo e API explícitos e separados",
+    "ok": true,
+    "ms": 4179
+  },
+  {
+    "nome": "18 Estados de carregamento, erro, vazio e resposta antiga (corrida)",
+    "ok": true,
+    "ms": 3585
+  },
+  {
+    "nome": "18b Estado vazio: propriedade nova sem dispositivo",
+    "ok": true,
+    "ms": 3514
+  },
+  {
+    "nome": "18c Visual (desktop): sem rolagem horizontal e capturas das telas",
+    "ok": true,
+    "ms": 11117
+  },
+  {
+    "nome": "16 Console do navegador sem erros em toda a execução",
+    "ok": true,
+    "ms": 0
+  }
+]

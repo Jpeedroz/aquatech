@@ -1,18 +1,45 @@
-.kpi-nota { font-size: 10px; color: var(--cinza); margin-top: 6px; }
 .kpi-valor.azul { color: var(--azul); }
 .ponto { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--vermelho); margin-right: 8px; vertical-align: middle; }
-.ponto.ligada { background: #1fa34a; }
-.kpi-solo { background: #536f50; border-color: #536f50; color: #fff; }
-.kpi-solo .kpi-rotulo { color: #e6efe4; }
-.kpi-status { display: flex; align-items: center; gap: 6px; font-size: 10px; margin-top: 8px; }
-.kpi-status .ponto { width: 6px; height: 6px; margin: 0; background: #9ad48f; }
-.kpi-solo.seco { background: #8a5a22; border-color: #8a5a22; }
-.kpi-solo.seco .kpi-status .ponto { background: #ffd08a; }
-.grafico-card { margin-top: 20px; padding: 20px 24px 14px; }
+.ponto.ligada { background: #15803d; }
+.kpi-solo { position: relative; background: #536f50; border-color: #536f50; color: #fff; transition: background-color .25s ease, border-color .25s ease; }
+.kpi-solo .kpi-rotulo { color: rgba(255,255,255,.9); }
+.kpi-solo .kpi-nota { color: rgba(255,255,255,.82); }
+/* cor por estado do solo (só visual; nada é gravado): crítico, seco, adequado, úmido */
+.kpi-solo.critico { background: #9b2226; border-color: #9b2226; }
+.kpi-solo.seco { background: #a8560f; border-color: #a8560f; }
+.kpi-solo.adequado { background: #536f50; border-color: #536f50; }
+.kpi-solo.umido { background: #1f6f8b; border-color: #1f6f8b; }
+.kpi-solo.critico .kpi-status .ponto, .kpi-solo.critico .kpi-barra div { background: #ffb3b8; }
+.kpi-solo.seco .kpi-status .ponto, .kpi-solo.seco .kpi-barra div { background: #ffd9a8; }
+.kpi-solo.adequado .kpi-status .ponto, .kpi-solo.adequado .kpi-barra div { background: #b8e6a8; }
+.kpi-solo.umido .kpi-status .ponto, .kpi-solo.umido .kpi-barra div { background: #b3e3f5; }
+.kpi-barra { position: relative; height: 6px; border-radius: 3px; background: rgba(255,255,255,.25); margin-top: 10px; }
+/* caixas FIXAS: mesma altura sempre; topo (título), meio (valor) e base (notas) distribuídos, nada cresce nem desloca o resto da tela */
+.grade-kpi .kpi { height: 150px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
+.grade-kpi .kpi-valor { margin-top: 0; }
+.grade-kpi .kpi-nota { margin-top: 0; min-height: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.grade-kpi .kpi-rotulo > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; min-width: 0; }
+.grade-kpi .kpi-rotulo { gap: 8px; }
+.kpi-linha { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.kpi-rodape { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+.kpi-textos { min-width: 0; }
+.kpi-barra div { height: 100%; border-radius: 3px; transition: width .25s ease; }
+.kpi-barra u { position: absolute; top: -2px; width: 1px; height: 10px; background: rgba(255,255,255,.75); }
+.kpi-voltar { flex: none; margin: 0; border: 1px solid rgba(255,255,255,.55); background: rgba(255,255,255,.12); color: #fff; border-radius: 6px; padding: 3px 10px; font: 600 10px var(--fonte); cursor: pointer; }
+.kpi-voltar:hover { background: rgba(255,255,255,.25); }
+.kpi-voltar:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.dica-clique { margin-left: auto; font-style: italic; }
+.grafico-wrap.clicavel svg { cursor: pointer; }
+.kpi-status { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; margin-bottom: 3px; }
+.kpi-status .ponto { width: 6px; height: 6px; margin: 0; }
+.grafico-card { margin-top: 20px; padding: 20px 24px 16px; }
+.grafico-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
 .grafico-card h2 { font-size: 15px; font-weight: 600; }
-.legenda { display: flex; gap: 18px; font-size: 10px; color: var(--cinza); margin: 8px 0 6px; }
+.sub { font-size: 11px; color: var(--cinza); margin-top: 4px; }
+.legenda { display: flex; flex-wrap: wrap; gap: 18px; font-size: 10px; color: var(--cinza); margin: 12px 0 6px; }
 .legenda span { display: flex; align-items: center; gap: 6px; }
 .leg-ponto { width: 8px; height: 8px; border-radius: 50%; background: var(--azul); }
+.leg-ponto.verde { background: #15803d; }
+.leg-ponto.vermelho { background: var(--vermelho); }
 .leg-linha { width: 16px; border-top: 1.5px dashed #9aa5b3; }
 .leg-faixa { width: 14px; height: 10px; background: #c9f2c7; border: 1px solid #b4e5b1; }
-#grafico svg { width: 100%; height: auto; display: block; }

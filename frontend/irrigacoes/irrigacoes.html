@@ -14,20 +14,30 @@
       <header class="topbar"><h1 id="tituloPagina"></h1><p id="subtituloPagina"></p></header>
       <section class="conteudo">
         <div class="grade-kpi">
-          <article class="card kpi"><div class="kpi-rotulo" id="r1"></div><div class="kpi-valor" id="kQtd">—</div></article>
-          <article class="card kpi"><div class="kpi-rotulo" id="r2"></div><div class="kpi-valor" id="kTempo">—</div></article>
-          <article class="card kpi"><div class="kpi-rotulo" id="r3"></div><div class="kpi-valor" id="kAgua">—</div></article>
-          <article class="card kpi"><div class="kpi-rotulo" id="r4"></div><div class="kpi-valor" id="kVazao">—</div></article>
+          <article class="card kpi"><div class="kpi-rotulo"><span id="r1"></span><em class="kpi-tag kpi-tag-periodo" id="t1">período</em></div><div class="kpi-valor" id="kQtd">—</div><div class="kpi-nota" id="nQtd"></div></article>
+          <article class="card kpi"><div class="kpi-rotulo"><span id="r2"></span><em class="kpi-tag kpi-tag-periodo" id="t2">período</em></div><div class="kpi-valor" id="kTempo">—</div><div class="kpi-nota" id="nTempo"></div></article>
+          <article class="card kpi"><div class="kpi-rotulo"><span id="r3"></span><em class="kpi-tag kpi-tag-periodo" id="t3">período</em></div><div class="kpi-valor" id="kAgua">—</div><div class="kpi-nota" id="nAgua"></div></article>
+          <article class="card kpi"><div class="kpi-rotulo"><span id="r4"></span><em class="kpi-tag kpi-tag-periodo" id="t4">período</em></div><div class="kpi-valor" id="kVazao">—</div><div class="kpi-nota">litros ÷ minutos irrigados</div></article>
         </div>
-        <div class="eventos-topo"><h2>Eventos recentes</h2><div id="filtro"></div></div>
-        <div class="linha-tempo" id="eventos"></div>
+        <div class="eventos-topo">
+          <div><h2 id="tituloEventos">Eventos</h2><p class="sub" id="subEventos"></p></div>
+          <div id="filtro"></div>
+        </div>
+        <div class="linha-tempo" id="eventos" aria-live="polite"></div>
+        <div class="resumo-tres" id="tagsDia" aria-label="Resumo das irrigações do dia"></div>
+        <div id="paginacaoDias"></div>
       </section>
     </main>
   </div>
   <script src="../shared/js/utils.js"></script>
   <script src="../shared/js/session.js"></script>
+  <script src="../shared/js/tempo.js"></script>
+  <script src="../shared/js/config.js"></script>
+  <script src="../shared/js/demo.js"></script>
+  <script src="../shared/js/analise.js"></script>
   <script src="../shared/js/mockData.js"></script>
   <script src="../shared/js/api.js"></script>
+  <script src="../shared/js/componentes.js"></script>
   <script src="irrigacoes.js"></script>
 </body>
 </html>
