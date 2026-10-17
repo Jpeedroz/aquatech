@@ -1,0 +1,12 @@
+# segredos e ambiente local (NUNCA vão para o GitHub)
+backend/.env
+backend/venv/
+backend/.venv/
+venv/
+.venv/
+__pycache__/
+*.pyc
+.vscode/
+node_modules/
+# variáveis do Docker Compose (segredos)
+/.env
