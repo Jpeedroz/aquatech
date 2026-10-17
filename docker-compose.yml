@@ -1,0 +1,48 @@
+# AquaSmart - sobe PostgreSQL + back-end/front-end com UM comando:  docker compose up --build
+# Funciona SEM arquivo .env (valores de desenvolvimento abaixo). Para trocar senhas/segredos, crie um .env (modelo: .env.docker.example).
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-aquatech}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-aquatech123}
+      TZ: America/Fortaleza
+    volumes:
+      - pgdata:/var/lib/postgresql/data          # os dados ficam guardados aqui, mesmo se o contêiner for recriado
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-aquatech}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    ports:
+      - "127.0.0.1:${DB_PORTA_LOCAL:-5433}:5432"  # opcional: acessar o banco pelo seu computador (DBeaver, psql); só local
+
+  app:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-aquatech-chave-de-desenvolvimento-somente-dev-0001}
+      CHAVE_DISPOSITIVOS: ${CHAVE_DISPOSITIVOS:-aquatech-chave-dos-dispositivos-somente-dev-0002}
+      DB_HOST: db                                  # nome do serviço do PostgreSQL nesta rede do Docker
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-aquatech}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-aquatech123}
+      URL_SITE: ${URL_SITE:-http://localhost:5000}
+      COOKIE_SEGURO: ${COOKIE_SEGURO:-false}
+      EMAIL_MODO: ${EMAIL_MODO:-console}
+      CRIAR_USUARIO_DEMO: ${CRIAR_USUARIO_DEMO:-true}
+      FLASK_HOST: 0.0.0.0
+      FLASK_PORT: 5000
+    ports:
+      - "5000:5000"
+
+volumes:
+  pgdata:
