@@ -9,7 +9,11 @@ Sistema de irrigação inteligente: o ESP32 mede o solo, a API Flask guarda no P
 * Docker Compose
 * HTML, CSS e JavaScript
 
-**Precisa instalar:** somente o **Docker Desktop**. O resto (Python, PostgreSQL) vem dentro do Docker.
+## Requisitos
+
+- Git
+- Docker Desktop
+- Python instalado (para gerar as chaves)
 
 ## Regras
 
@@ -17,52 +21,91 @@ Sistema de irrigação inteligente: o ESP32 mede o solo, a API Flask guarda no P
 * Desliga a bomba: umidade a partir de 30%.
 * Estado do solo: crítico (< 12%), seco (< 18%), adequado (< 30%), úmido (≥ 30%).
 
-## Como executar
+##Execução:
 
-1. Instale o Docker Desktop e abra-o (espere aparecer "running").
-2. Extraia o ZIP do projeto e abra o terminal dentro da pasta extraída (a que tem o `docker-compose.yml`). Jeito mais fácil: abra a pasta no VS Code (`Arquivo > Abrir Pasta`) e use `Terminal > Novo Terminal`. Ou no Explorador de Arquivos, entre na pasta, clique na barra de endereço, digite `cmd` e tecle Enter.
-3. Rode:
+## 1. Clonar o projeto
 
-```
-docker compose up --build
-```
-
-4. Espere aparecer `iniciando o servidor na porta 5000` (na primeira vez demora alguns minutos).
-5. Abra no navegador:
-
-```
-http://localhost:5000/login/login.html?modo=demo
+```bash
+git clone URL_DO_REPOSITORIO
+cd NOME_DA_PASTA
 ```
 
-6. Entre com `usuario@exemplo.com` e a senha `123456`.
+Substitua `URL_DO_REPOSITORIO` pelo endereço do repositório e `NOME_DA_PASTA` pelo nome da pasta criada.
 
-Para parar: `Ctrl+C`. Para apagar o banco e recomeçar: `docker compose down -v`.
+## 2. Configurar o ambiente
 
-## Dois modos
+Copie o arquivo de exemplo para criar o `.env`:
 
-* `?modo=demo`: dados de teste simulados (01/08 a 19/10/2026). Não usa o banco. Use este na apresentação.
-* `?modo=api`: dados reais do PostgreSQL. Começa vazio: cadastre a propriedade na tela e os dados chegam do ESP32.
-
-## Se der erro
-
-* **Porta 5000 ocupada:** feche o programa que a usa.
-* **Erro de senha do banco:** `docker compose down -v` e suba de novo.
-* **Docker não encontrado:** abra o Docker Desktop e tente de novo.
-
-## Mais detalhes
-
-* Editar dados de teste (modo demo): `MOCK_AJUSTES` em `frontend/shared/js/mockData.js`.
-* Dados persistidos no PostgreSQL: usuários, propriedades, dispositivos, leituras e irrigações. Migrations: nenhuma, o esquema (`database/aquatech_database.sql`) não mudou.
-* Trocar senhas e segredos: copie `.env.docker.example` para `.env` e edite.
-* Criar o usuário de demonstração no modo real: `docker compose exec app python scripts/criar_usuario_demo.py` (o Docker já faz isso sozinho).
-* Cadastrar o ESP32: `docker compose exec app python scripts/cadastrar_dispositivo.py --email usuario@exemplo.com --codigo ESP32-001`.
-* Sem Docker: `cd backend`, `pip install -r requirements.txt`, copie `.env.example` para `.env`, `python scripts/init_db.py --criar-banco` e `python app.py` (precisa de Python 3.9+ e PostgreSQL 16).
-
-## Testes
-
-```
-node --test frontend/tests/logica.test.js frontend/tests/estrutura.test.js
-cd backend && python -m unittest discover -s tests -t .
+```bash
+cp .env.docker.example .env
 ```
 
-(Testes de navegador: `node frontend/tests/e2e.js` e `e2e_real.js`, com Playwright. Testes no PostgreSQL real: `DB_NAME=aquatech_teste python -m unittest tests.test_postgres`, que apaga as tabelas.)
+Gere uma chave aleatória para `SECRET_KEY`:
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Execute o mesmo comando novamente para gerar outra chave para `CHAVE_DISPOSITIVOS`.
+
+Abra o arquivo `.env` e configure as variáveis:
+
+```env
+DB_PASSWORD=sua_senha_do_postgresql
+DB_NAME=aquatech
+DB_USER=postgres
+SECRET_KEY=cole_a_primeira_chave
+CHAVE_DISPOSITIVOS=cole_a_segunda_chave
+```
+
+Substitua os valores de exemplo pelos valores correspondentes ao seu ambiente. A senha deve corresponder à configuração do PostgreSQL.
+
+**Importante:** use chaves diferentes e não envie o arquivo `.env` para o GitHub.
+
+## 3. Iniciar o projeto
+
+```bash
+docker compose up -d --build
+```
+
+Verifique os serviços:
+
+```bash
+docker compose ps
+```
+
+Consulte os logs da aplicação:
+
+```bash
+docker compose logs -f app
+```
+
+Consulte os logs do banco de dados:
+
+```bash
+docker compose logs -f db
+```
+
+Para sair da visualização dos logs, pressione `Ctrl + C`. Isso não encerra os contêineres.
+
+## 4. Acessar a aplicação
+
+- **API:** http://localhost:5000/api/saude
+- **Demonstração:** http://localhost:5000/login/login.html?modo=demo
+- **Aplicação com API:** http://localhost:5000/login/login.html?modo=api
+
+## 5. Parar o projeto
+
+```bash
+docker compose down
+```
+
+Esse comando para e remove os contêineres e a rede do projeto, sem solicitar a exclusão do volume do banco de dados.
+
+## Observações
+
+- O arquivo `.env` deve ficar na raiz do projeto.
+- O arquivo `.env.docker.example` é apenas um modelo de configuração.
+- Cada pessoa deve configurar seu próprio `.env`.
+- Não compartilhe senhas ou chaves secretas.
+- Não use `docker compose down -v` se quiser preservar os dados armazenados no volume do banco.
