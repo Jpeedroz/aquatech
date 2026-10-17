@@ -1,15 +1,11 @@
-.medicoes { margin-top: 22px; padding: 22px 26px 26px; }
-.medicoes-topo { display: flex; justify-content: space-between; align-items: flex-start; }
+.medicoes { margin-top: 22px; padding: 22px 26px 22px; }
+.medicoes-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
 .medicoes h2 { font-size: 15px; color: var(--verde); font-weight: 600; }
 .contagem { font-size: 11px; color: var(--verde); font-weight: 600; margin-top: 4px; }
-.tabela-card { border: 1px solid var(--borda); border-radius: 12px; padding: 16px 18px; margin-top: 6px; }
-.tabela-titulo { display: flex; justify-content: space-between; align-items: baseline; }
-.tabela-titulo h3 { font-size: 13px; font-weight: 600; }
-.tabela-titulo span { font-size: 9px; color: var(--cinza); }
-.tabela-rolagem { max-height: 420px; overflow-y: auto; margin-top: 8px; }
-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-th { text-align: left; font: 500 9px var(--fonte); color: var(--cinza); padding: 6px 6px; border-bottom: 1px solid var(--borda); position: sticky; top: 0; background: #fff; }
-td { padding: 9px 6px; border-bottom: 1px solid #eef2f6; }
+.resumo-dia { font-size: 12px; color: #4a5666; margin: 12px 0 4px; background: #f4f7fa; border-radius: 8px; padding: 9px 12px; }
+.resumo-dia:empty { display: none; }
+.tabela-card { border: 1px solid var(--borda); border-radius: 12px; padding: 8px 18px 14px; margin-top: 10px; }
+.tabela-rolagem { overflow-x: auto; }
 td.num { font-weight: 700; } td.em-irrigacao { color: var(--laranja); }
-.selo { display: inline-block; min-width: 62px; text-align: center; padding: 3px 10px; border-radius: 999px; font-size: 9px; font-weight: 600; background: #eef1f5; color: #5b6676; }
+.selo { display: inline-block; min-width: 70px; text-align: center; padding: 3px 10px; border-radius: 999px; font-size: 10px; font-weight: 600; background: #eef1f5; color: #5b6676; }
 .selo.ligada { background: #e4f8e6; color: #1c6b3a; }
