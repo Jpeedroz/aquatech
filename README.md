@@ -1,6 +1,16 @@
 # AquaTech
 
-Sistema de irrigação inteligente: o ESP32 mede o solo, a API Flask guarda no PostgreSQL e o painel web mostra tudo.
+Sistema de irrigação inteligente para monitoramento da umidade do solo, acompanhamento das irrigações e controle do consumo de água.
+
+## Funcionamento
+
+O sistema recebe dados dos sensores, envia as informações para a API e armazena os registros no PostgreSQL. A aplicação web consulta esses dados e apresenta indicadores, gráficos e históricos para acompanhar a umidade do solo e o consumo de água.
+
+**Fluxo do sistema:**
+
+```text
+Sensores → ESP32 → Wi-Fi → API → PostgreSQL → Dashboard
+```
 
 ## Tecnologias
 
