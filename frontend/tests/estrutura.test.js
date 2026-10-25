@@ -48,9 +48,9 @@ test('o mock central tem o bloco de ajustes e o usuário de demonstração sem s
 
 test('a data de referência é definida num só lugar e só vale no modo demo', () => {
   const mock = ler('frontend/shared/js/mockData.js');
-  assert.match(mock, /const MOCK_DATA_REFERENCIA = '2026-10-19';/);
+  assert.match(mock, /const MOCK_DATA_REFERENCIA = '2026-10-26';/);
   assert.match(mock, /if \(typeof USAR_MOCK !== 'undefined' && USAR_MOCK[^\n]*definirReferencia\(MOCK_DATA_REFERENCIA\)/);
-  const usos = arquivos.filter(f => /\.(js|html)$/.test(f) && !/tests/.test(f) && /2026-10-19/.test(fs.readFileSync(f, 'utf8'))).map(f => path.relative(RAIZ, f));
+  const usos = arquivos.filter(f => /\.(js|html)$/.test(f) && !/tests/.test(f) && /2026-10-26/.test(fs.readFileSync(f, 'utf8'))).map(f => path.relative(RAIZ, f));
   assert.deepEqual(usos.filter(f => !/mockData\.js|demo\.js/.test(f)), [], 'a data fixa não pode ser espalhada: ' + usos);
   assert.ok(!/definirReferencia/.test(ler('frontend/shared/js/api.js')), 'o modo API não usa a referência');
 });

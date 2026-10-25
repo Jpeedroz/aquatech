@@ -70,25 +70,25 @@ test('paginação por dia: começa no mais recente, respeita limites e ignora di
 });
 
 /* ============================ demo.js ============================ */
-const FIM_DEMO = '2026-10-19T23:59:00';
+const FIM_DEMO = '2026-10-26T23:59:00';
 const horaDe = ts => Number(ts.slice(11, 13));
-test('demo: período de 01/08/2026 a 19/10/2026, inclusive (80 dias)', () => {
+test('demo: período de 01/08/2026 a 26/10/2026, inclusive (87 dias)', () => {
   const est = gerar(FIM_DEMO);
   const dias = [...new Set(est.L.map(l => l[2].slice(0, 10)))].sort();
-  assert.equal(D.TOTAL_DIAS, 80);
-  assert.equal(dias[0] >= '2026-08-01', true); assert.equal(dias[dias.length - 1] <= '2026-10-19', true);
-  assert.deepEqual(dias, T.listaDias('2026-08-01', '2026-10-19'), 'todos os 80 dias têm leituras, sem lacunas');
-  assert.equal(dias[0], '2026-08-01'); assert.equal(dias[dias.length - 1], '2026-10-19');
-  assert.equal(T.diasEntre('2026-08-01', '2026-10-19') + 1, 80);
-  assert.equal(est.L.filter(l => l[2] < '2026-08-01' || l[2] > '2026-10-19T23:59:59').length, 0);
-  assert.ok(est.E.every(e => e.iniciado_em >= '2026-08-01' && e.iniciado_em <= '2026-10-19T23:59:59'));
+  assert.equal(D.TOTAL_DIAS, 87);
+  assert.equal(dias[0] >= '2026-08-01', true); assert.equal(dias[dias.length - 1] <= '2026-10-26', true);
+  assert.deepEqual(dias, T.listaDias('2026-08-01', '2026-10-26'), 'todos os 87 dias têm leituras, sem lacunas');
+  assert.equal(dias[0], '2026-08-01'); assert.equal(dias[dias.length - 1], '2026-10-26');
+  assert.equal(T.diasEntre('2026-08-01', '2026-10-26') + 1, 87);
+  assert.equal(est.L.filter(l => l[2] < '2026-08-01' || l[2] > '2026-10-26T23:59:59').length, 0);
+  assert.ok(est.E.every(e => e.iniciado_em >= '2026-08-01' && e.iniciado_em <= '2026-10-26T23:59:59'));
 });
-test('demo: 13 medições por dia (06h–18h), até 1.040 por sensor, sem duplicatas e em ordem', () => {
+test('demo: 13 medições por dia (06h–18h), até 1.131 por sensor, sem duplicatas e em ordem', () => {
   const est = gerar(FIM_DEMO);
   for (const sensor of [1, 2, 3]) {
     const ls = est.L.filter(l => l[0] === sensor);
     const naJanela = ls.filter(l => horaDe(l[2]) >= 6 && horaDe(l[2]) <= 18 && l[2].slice(0, 10) <= D.FIM);
-    assert.equal(naJanela.length, 1040, `sensor ${sensor}: ${naJanela.length} medições entre 06h e 18h`);
+    assert.equal(naJanela.length, 1131, `sensor ${sensor}: ${naJanela.length} medições entre 06h e 18h`);
     // fora da janela só há medição enquanto a bomba está ligada (o sensor segue medindo até ela desligar)
     ls.filter(l => !(horaDe(l[2]) >= 6 && horaDe(l[2]) <= 18)).forEach(l => assert.ok(est.E.some(e => l[2] > e.iniciado_em && l[2] <= e.encerrado_em), 'medição fora de 06–18h sem irrigação: ' + l[2]));
     assert.equal(new Set(ls.map(l => l[2])).size, ls.length, 'duplicata');
@@ -98,7 +98,7 @@ test('demo: 13 medições por dia (06h–18h), até 1.040 por sensor, sem duplic
   const porDia = new Map();
   est.L.filter(l => l[0] === 1 && horaDe(l[2]) >= 6 && horaDe(l[2]) <= 18).forEach(l => { const d = l[2].slice(0, 10); porDia.set(d, (porDia.get(d) || []).concat(horaDe(l[2]))); });
   const completos = [...porDia.values()].filter(h => h.length === 13);
-  assert.equal(completos.length, 80, `dias completos: ${completos.length}`);
+  assert.equal(completos.length, 87, `dias completos: ${completos.length}`);
   completos.forEach(h => assert.deepEqual(h, [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]));
   assert.ok([...porDia.values()].every(h => h.length <= 13));
   // as três séries andam juntas (mesmos horários)
@@ -121,7 +121,7 @@ test('demo: valores dentro dos limites físicos e variados', () => {
   assert.ok(new Set(por(1)).size > 150); assert.ok(new Set(por(2)).size > 60);
   assert.ok(por(3).some(v => v > 0) && por(3).some(v => v === 0));
 });
-test('demo: NENHUM dia sem registros: 13 leituras e pelo menos 1 irrigação em todos os 80 dias', () => {
+test('demo: NENHUM dia sem registros: 13 leituras e pelo menos 1 irrigação em todos os 87 dias', () => {
   const est = gerar(FIM_DEMO);
   const cont = new Map(); est.L.filter(l => l[0] === 1 && horaDe(l[2]) >= 6 && horaDe(l[2]) <= 18).forEach(l => cont.set(l[2].slice(0, 10), (cont.get(l[2].slice(0, 10)) || 0) + 1));
   const ev = new Map(); est.E.forEach(e => ev.set(e.iniciado_em.slice(0, 10), (ev.get(e.iniciado_em.slice(0, 10)) || 0) + 1));
@@ -342,16 +342,16 @@ test('subtítulos simples por filtro (Consumo e Irrigações)', () => {
   assert.deepEqual(['hoje', '7dias', '1mes', 'personalizado'].map(t => T.subtituloPeriodo(p(t), 'irrigacoes')),
     ['Irrigações de hoje', 'Irrigações dos últimos 7 dias', 'Irrigações do último mês', 'Irrigações do período selecionado']);
 });
-test('referência 19/10: tudo disponível, sem eventos abertos e nada depois de 19/10', () => {
-  relogio('2026-10-16T03:00:00'); T.definirReferencia('2026-10-19'); D.reiniciar();
+test('referência 26/10: tudo disponível, sem eventos abertos e nada depois de 26/10', () => {
+  relogio('2026-10-16T03:00:00'); T.definirReferencia('2026-10-26'); D.reiniciar();
   try {
     const est = D.estado(null, null, { area_hectares: 2 });
     const evs = D.eventos(est, '2026-08-01', '2026-12-31');
     assert.ok(evs.every(e => e.encerrado_em), 'nenhum evento aberto');
     assert.equal(evs.length, est.E.length, 'todos os eventos visíveis');
-    assert.equal(D.diasDisponiveis(est, 'consumo').length, 80);
-    assert.equal(D.leituras(est, '2026-10-20', '2026-12-31').length, 0);
-    assert.equal(D.diasDisponiveis(est, 'leituras').pop(), '2026-10-19');
+    assert.equal(D.diasDisponiveis(est, 'consumo').length, 87);
+    assert.equal(D.leituras(est, '2026-10-27', '2026-12-31').length, 0);
+    assert.equal(D.diasDisponiveis(est, 'leituras').pop(), '2026-10-26');
   } finally { T.definirReferencia(null); relogio(AGORA_LOCAL); D.reiniciar(); }
 });
 
