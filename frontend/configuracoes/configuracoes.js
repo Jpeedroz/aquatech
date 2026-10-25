@@ -5,6 +5,7 @@ let usuarioAtual = null, propriedadeAtual = null;
 document.addEventListener('DOMContentLoaded', async () => {
   if (!exigirLogin()) return;
   montarLayout('configuracoes');
+  document.getElementById('btnSairCelular').addEventListener('click', sair);   // sair() está em api.js
   definirTopo('Configurações', 'Gerencie seus dados e as informações da propriedade');
   aplicarMascaraTelefone(document.getElementById('telefone'));
   CULTURAS.forEach(c => document.getElementById('pCultura').add(new Option(c, c)));
