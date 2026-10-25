@@ -65,14 +65,14 @@ function montarLayout(paginaAtual) {
     ['dashboard', 'Dashboard', 'home'],
     ['historico', 'Histórico', 'history'],
     ['irrigacoes', 'Irrigações', 'drop'],
-    ['consumo', 'Consumo de água', 'waves'],
-    ['configuracoes', 'Configurações', 'gear']
+    ['consumo', 'Consumo de água', 'waves', 'Consumo'],
+    ['configuracoes', 'Configurações', 'gear', 'Config.']
   ];
   document.getElementById('sidebar').innerHTML = `
     <img class="sidebar-logo" src="../assets/logos/logo-sidebar.png" alt="AquaSmart">
     <nav class="menu">
-      ${itens.map(([id, texto, ic]) =>
-        `<a class="menu-item ${id === paginaAtual ? 'ativo' : ''}" href="../${id}/${id}.html">${icone(ic)}<span>${texto}</span></a>`).join('')}
+      ${itens.map(([id, texto, ic, curto]) =>
+        `<a class="menu-item ${id === paginaAtual ? 'ativo' : ''}" href="../${id}/${id}.html">${icone(ic)}<span class="rot-longo">${texto}</span><span class="rot-curto">${curto || texto}</span></a>`).join('')}
     </nav>
     <div class="sidebar-rodape">
       <a class="usuario ${paginaAtual === 'configuracoes' ? 'ativo' : ''}" id="menuPerfil" href="../configuracoes/configuracoes.html" title="Abrir configurações" aria-label="Abrir configurações do perfil"><span class="avatar" id="menuAvatar"></span>
