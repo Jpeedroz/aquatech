@@ -5,10 +5,10 @@
    Uma ÚNICA série alimenta Dashboard, Histórico, Irrigações e Consumo.
 
    Período e frequência (fixos, ver INICIO / FIM / HORAS)
-   - 01/08/2026 a 19/10/2026, inclusive (80 dias corridos).
+   - 01/08/2026 a 26/10/2026, inclusive (87 dias corridos).
    - UMA leitura por hora, das 06h às 18h, inclusive: 13 por dia, para
-     umidade, temperatura e vazão (80 × 13 = 1.040 por sensor).
-   - SEM lacunas: todos os 80 dias têm as 13 leituras e pelo menos 1 evento de
+     umidade, temperatura e vazão (87 × 13 = 1.131 por sensor).
+   - SEM lacunas: todos os 87 dias têm as 13 leituras e pelo menos 1 evento de
      irrigação (1 ou 2 por dia, com horários, durações e volumes variados).
      Para simular uma falha, edite MOCK_AJUSTES em mockData.js.
 
@@ -37,7 +37,7 @@
      de vazão caiu dentro do evento, o volume é marcado como ESTIMADO.
 
    Quem manda no "hoje"
-   - MOCK_DATA_REFERENCIA (mockData.js) = '2026-10-19': "hoje" é 19/10/2026 e todo
+   - MOCK_DATA_REFERENCIA (mockData.js) = '2026-10-26': "hoje" é 26/10/2026 e todo
      esse dia (13 leituras, 06h–18h) já está disponível, qualquer que seja a data
      do computador. Com null, vale o horário real: só aparece o que já aconteceu
      e uma irrigação em andamento aparece ABERTA, com volume 0, até terminar.
@@ -50,7 +50,7 @@
   const T = raiz.Tempo || (typeof require !== 'undefined' ? require('./tempo.js') : null);
 
   const INICIO = '2026-08-01';
-  const FIM = '2026-10-19';
+  const FIM = '2026-10-26';
   const SEMENTE = 20260801;
   const HORA_INICIAL = 6, HORA_FINAL = 18;               // medições de hora em hora, inclusive
   const HORAS = Array.from({ length: HORA_FINAL - HORA_INICIAL + 1 }, (_, i) => HORA_INICIAL + i);
@@ -62,7 +62,7 @@
   const AREA_PADRAO = 2;                                 // ha (Sítio Boa Vista); usada se a propriedade não informar a área
   const VAZAO_REF = 3.2;                                 // L/min da bomba para AREA_PADRAO
   const TAXA_REF = 0.05;                               // % de umidade por minuto por (L/min ÷ √ha)
-  const TOTAL_DIAS = T.diasEntre(INICIO, FIM) + 1;       // 80
+  const TOTAL_DIAS = T.diasEntre(INICIO, FIM) + 1;       // 87
 
   /* ---------- sorteio determinístico ---------- */
   function hash32(a, b) {

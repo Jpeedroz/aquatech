@@ -7,7 +7,7 @@
    config.js); no modo API quem responde é o Flask/PostgreSQL.
 
    As leituras e eventos vêm de demo.js: uma única série determinística
-   (01/08/2026 a 19/10/2026, uma leitura por hora das 06h às 18h; cenário ilustrativo de período seco e quente, FICTÍCIO) lida
+   (01/08/2026 a 26/10/2026, uma leitura por hora das 06h às 18h; cenário ilustrativo de período seco e quente, FICTÍCIO) lida
    por TODAS as telas. Nada é guardado no navegador, então qualquer edição
    neste arquivo aparece em todas as páginas assim que você recarrega.
 
@@ -35,6 +35,16 @@ const MOCK_AJUSTES = {
     { hora: '2026-10-19T15:00', umidade: 17.1, vazao: 3.3 }, { hora: '2026-10-19T16:00', umidade: 23.5, vazao: 3.3 },
     { hora: '2026-10-19T17:00', umidade: 30.4, vazao: 0 }, { hora: '2026-10-19T18:00', umidade: 28.6, vazao: 0 },
 
+    /* DIA ATUAL DO DEMO (26/10/2026): mesma ideia do dia anterior, com valores próprios.
+       1ª irrigação: liga 08:00 (17,8%) e desliga 10:00 (31,6%). 2ª: liga 15:00 (17,5%) e desliga 17:00 (30,8%). */
+    { hora: '2026-10-26T06:00', umidade: 22.0 }, { hora: '2026-10-26T07:00', umidade: 20.1 },
+    { hora: '2026-10-26T08:00', umidade: 17.8, vazao: 3.4 }, { hora: '2026-10-26T09:00', umidade: 25.3, vazao: 3.4 },
+    { hora: '2026-10-26T10:00', umidade: 31.6, vazao: 0 }, { hora: '2026-10-26T11:00', umidade: 29.2, vazao: 0 },
+    { hora: '2026-10-26T12:00', umidade: 26.4, vazao: 0 }, { hora: '2026-10-26T13:00', umidade: 24.0, vazao: 0 },
+    { hora: '2026-10-26T14:00', umidade: 21.2, vazao: 0 },
+    { hora: '2026-10-26T15:00', umidade: 17.5, vazao: 3.3 }, { hora: '2026-10-26T16:00', umidade: 24.1, vazao: 3.3 },
+    { hora: '2026-10-26T17:00', umidade: 30.8, vazao: 0 }, { hora: '2026-10-26T18:00', umidade: 29.0, vazao: 0 },
+
     /* 18/10/2026: manhã com solo CRÍTICO (< 12%) logo na 1ª medição, para a semana mostrar os quatro estados do solo
        (crítico, seco, adequado e úmido). A bomba liga na 1ª medição e desliga em 30,4% (09:00). */
     { hora: '2026-10-18T06:00', umidade: 10.8, vazao: 3 }, { hora: '2026-10-18T07:00', umidade: 17.6, vazao: 3 },
@@ -51,6 +61,9 @@ const MOCK_AJUSTES = {
     { inicio: '2026-10-19T08:00', fim: '2026-10-19T10:00', vazao_lmin: 3.4, umidade_antes: 17.3, umidade_depois: 31.2 },
     { inicio: '2026-10-19T15:00', fim: '2026-10-19T17:00', vazao_lmin: 3.3, umidade_antes: 17.1, umidade_depois: 30.4 },
     { inicio: '2026-10-18T06:00', fim: '2026-10-18T09:00', vazao_lmin: 3, umidade_antes: 10.8, umidade_depois: 30.4 },   // 18/10: começa com solo crítico
+    // as duas irrigações do dia 26/10 (3,4 × 120 = 408 L e 3,3 × 120 = 396 L)
+    { inicio: '2026-10-26T08:00', fim: '2026-10-26T10:00', vazao_lmin: 3.4, umidade_antes: 17.8, umidade_depois: 31.6 },
+    { inicio: '2026-10-26T15:00', fim: '2026-10-26T17:00', vazao_lmin: 3.3, umidade_antes: 17.5, umidade_depois: 30.8 },
   ],
 
   /* Apaga eventos gerados, pelo horário de início exato:
@@ -58,17 +71,18 @@ const MOCK_AJUSTES = {
   remover_eventos: [
     // '2026-10-12T09:07:00',
     '2026-10-19T12:00:00',     // irrigação automática do dia 19/10, trocada pelas duas acima
-    '2026-10-18T06:00:00'      // irrigação automática do dia 18/10 (06:00–09:00), trocada pela de 18/10 acima (começa com solo crítico)
+    '2026-10-18T06:00:00',     // irrigação automática do dia 18/10 (06:00–09:00), trocada pela de 18/10 acima (começa com solo crítico)
+    '2026-10-26T06:00:00'      // irrigação automática do dia 26/10, trocada pelas duas acima
   ]
 };
 
 /* DATA DE REFERÊNCIA DO DEMO ("hoje" na apresentação). É o ÚNICO lugar onde ela é definida.
-   - '2026-10-19': o sistema se comporta como se hoje fosse 19/10/2026, mesmo que o computador
-     tenha outra data. Hoje = 19/10; 7 dias = 13/10 a 19/10; 1 mês = 20/09 a 19/10. Todos os dados
-     do dia 19/10 (13 leituras, 06h–18h) já estão disponíveis.
+   - '2026-10-26': o sistema se comporta como se hoje fosse 26/10/2026, mesmo que o computador
+     tenha outra data. Hoje = 26/10; 7 dias = 20/10 a 26/10; 1 mês = 27/09 a 26/10. Todos os dados
+     do dia 26/10 (13 leituras, 06h–18h) já estão disponíveis.
    - null: usa a data e hora reais (America/Fortaleza); só aparece o que já aconteceu.
    Só vale no MODO DEMO (no modo API o relógio é sempre o normal) e não altera o relógio do computador. */
-const MOCK_DATA_REFERENCIA = '2026-10-19';
+const MOCK_DATA_REFERENCIA = '2026-10-26';
 
 /* ---------- 1) Contas do demo (ficam salvas no navegador) ---------- */
 // Conta de demonstração: usuario@exemplo.com / 123456 (SÓ para desenvolvimento).

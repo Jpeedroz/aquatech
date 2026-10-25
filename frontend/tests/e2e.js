@@ -32,10 +32,10 @@ const errosConsole = [];
 let page, base;
 const T_lista = (a, b) => { const r = []; for (let d = Date.parse(a + 'T00:00:00Z'); d <= Date.parse(b + 'T00:00:00Z'); d += 86400000) r.push(new Date(d).toISOString().slice(0, 10)); return r; };
 const num = t => Number(String(t).replace(/\./g, '').replace(',', '.').replace(/[^\d.\-]/g, ''));
-// Relógio do COMPUTADOR no teste: 16/10/2026 14:05 (fixo). O demo deve mostrar 19/10/2026 mesmo assim (MOCK_DATA_REFERENCIA).
+// Relógio do COMPUTADOR no teste: 16/10/2026 14:05 (fixo). O demo deve mostrar 26/10/2026 mesmo assim (MOCK_DATA_REFERENCIA).
 const AGORA_E2E = Date.parse('2026-10-16T17:05:00Z');
-const HOJE_DEMO = '2026-10-19';
-const hojeFortaleza = () => '2026-10-19';   // data de REFERÊNCIA do demo (o relógio do teste fica em 16/10 de propósito)
+const HOJE_DEMO = '2026-10-26';
+const hojeFortaleza = () => '2026-10-26';   // data de REFERÊNCIA do demo (o relógio do teste fica em 16/10 de propósito)
 const esperaFim = (sel) => page.waitForFunction(s => { const e = document.querySelector(s); return e && !e.querySelector('.spinner') && e.children.length > 0; }, sel, { timeout: 8000 });
 
 async function teste(nome, fn) {
@@ -352,18 +352,18 @@ async function escolherData(campo, iso) {
     }
     assert.deepEqual(diasPorFonte.dashboard, diasPorFonte.historico);
     assert.deepEqual(diasPorFonte.irrigacoes, diasPorFonte.dashboard);
-    assert.equal(diasPorFonte.consumo.length, 80);
+    assert.equal(diasPorFonte.consumo.length, 87);
   });
 
   /* ---------------- 12 ---------------- */
   await teste('12 Editar MOCK_AJUSTES em mockData.js reflete nas quatro páginas (e só elas)', async () => {
     const original = fs.readFileSync(path.join(RAIZ, 'shared/js/mockData.js'), 'utf8');
     const editado = original.replace(/\n  \],\n\n  \/\* Cria eventos/, `
-    { hora: '2026-10-19T10:00', umidade: 55.5, temperatura: 38.8 },
+    { hora: '2026-10-26T10:00', umidade: 55.5, temperatura: 38.8 },
   ],
 
   /* Cria eventos`).replace(/\n  \],\n\n  \/\* Apaga/, `
-    { inicio: '2026-10-19T12:30', fim: '2026-10-19T12:50', vazao_lmin: 10 },
+    { inicio: '2026-10-26T12:30', fim: '2026-10-26T12:50', vazao_lmin: 10 },
   ],
 
   /* Apaga`);
@@ -372,7 +372,7 @@ async function escolherData(campo, iso) {
     await page.route('**/shared/js/mockData.js', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: editado }));
     try {
       await irPara('dashboard');
-      const ponto10 = await page.evaluate(() => dadosPeriodo.grupos.find(g => g.hora === '2026-10-19T10:00:00'));
+      const ponto10 = await page.evaluate(() => dadosPeriodo.grupos.find(g => g.hora === '2026-10-26T10:00:00'));
       assert.equal(ponto10.umidade, 55.5); assert.equal(ponto10.temperatura, 38.8);
       const pontos = await page.$$eval('#grafico svg circle.ponto', cs => cs.map(c => { const b = c.getBoundingClientRect(); return [b.x + b.width / 2, b.y + b.height / 2]; }));
       await page.mouse.move(...pontos[4]);                                                   // 10:00 é o 5º ponto (06,07,08,09,10)
@@ -389,7 +389,7 @@ async function escolherData(campo, iso) {
 
   /* ---------------- 13 ---------------- */
   await teste('13 Gráfico de umidade: 13 pontos 06–18h ligados, 7 rótulos, tooltip em TODOS os pontos (mouse e teclado); consumo em litros', async () => {
-    await irPara('dashboard'); await periodo('7dias'); await esperaFim('#grafico');           // abre no dia mais recente: 19/10 (13 leituras, 06h–18h)
+    await irPara('dashboard'); await periodo('7dias'); await esperaFim('#grafico');           // abre no dia mais recente: 26/10 (13 leituras, 06h–18h)
     const svg = '#grafico svg';
     const rotulos = await page.$$eval(`${svg} text.rotulo-hora`, ts => ts.map(t => t.textContent));
     assert.deepEqual(rotulos, ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00']);
@@ -404,7 +404,7 @@ async function escolherData(campo, iso) {
     for (let i = 0; i < 13; i++) {                                                         // tooltip em cada um, inclusive 07h, 09h, 11h, 13h, 15h e 17h
       await page.mouse.move(5, 5); await page.mouse.move(...pontos[i]); await balao.waitFor({ state: 'visible' });
       const t = await balao.innerText();
-      assert.match(t, new RegExp(`19/10/2026 · ${dado[i].h}`), `ponto ${i}: horário`);
+      assert.match(t, new RegExp(`26/10/2026 · ${dado[i].h}`), `ponto ${i}: horário`);
       assert.ok(t.includes(`Umidade: ${fmt(dado[i].u)}%`), `ponto ${i}: umidade — ${t}`);
       assert.ok(t.includes(`Temperatura: ${fmt(dado[i].t)} °C`), `ponto ${i}: temperatura`);
       assert.ok(t.includes(`Irrigação: ${dado[i].lig ? 'ligada' : 'desligada'}`), `ponto ${i}: estado da irrigação`);
@@ -433,16 +433,16 @@ async function escolherData(campo, iso) {
   });
 
   /* ---------------- 14 ---------------- */
-  await teste('14 Período 01/08–19/10 sem lacunas: todos os dias com 13 leituras e irrigação; Histórico navega por todos', async () => {
+  await teste('14 Período 01/08–26/10 sem lacunas: todos os dias com 13 leituras e irrigação; Histórico navega por todos', async () => {
     const info = await page.evaluate(() => {
-      const est = Demo.estado(), todos = Tempo.listaDias('2026-08-01', '2026-10-19');
+      const est = Demo.estado(), todos = Tempo.listaDias('2026-08-01', '2026-10-26');
       const cont = d => Demo.leituras(est, d, d).filter(l => l.tipo === 'umidade_solo' && +l.hora_leitura.slice(11, 13) >= 6 && +l.hora_leitura.slice(11, 13) <= 18).length;
       const ev = d => Demo.eventos(est, d, d).length;
       return { n: todos.length, incompletos: todos.filter(d => cont(d) !== 13), semEvento: todos.filter(d => ev(d) < 1),
-               total: Demo.leituras(est, '2026-08-01', '2026-10-19', ['umidade_solo']).filter(l => +l.hora_leitura.slice(11, 13) >= 6 && +l.hora_leitura.slice(11, 13) <= 18).length, fora: Demo.leituras(est, '2026-10-20', '2026-12-31').length };
+               total: Demo.leituras(est, '2026-08-01', '2026-10-26', ['umidade_solo']).filter(l => +l.hora_leitura.slice(11, 13) >= 6 && +l.hora_leitura.slice(11, 13) <= 18).length, fora: Demo.leituras(est, '2026-10-27', '2026-12-31').length };
     });
-    assert.equal(info.n, 80); assert.deepEqual(info.incompletos, []); assert.deepEqual(info.semEvento, []);
-    assert.equal(info.total, 1040); assert.equal(info.fora, 0, 'nada fora do período simulado');
+    assert.equal(info.n, 87); assert.deepEqual(info.incompletos, []); assert.deepEqual(info.semEvento, []);
+    assert.equal(info.total, 1131); assert.equal(info.fora, 0, 'nada fora do período simulado');
     await irPara('historico'); await periodo('1mes'); await page.waitForTimeout(250);
     const dias = []; await percorrerDias(async () => { dias.push(await page.evaluate(() => pagDias.dia)); });
     assert.equal(dias.length, 30, 'a navegação passa pelos 30 dias do filtro, sem pular nenhum');
@@ -473,22 +473,22 @@ async function escolherData(campo, iso) {
   });
 
   /* ---------------- 19 ---------------- */
-  await teste('19 Data de referência 19/10/2026: Hoje, 7 dias, 1 mês, 13 medições até 18h (computador em 16/10)', async () => {
+  await teste('19 Data de referência 26/10/2026: Hoje, 7 dias, 1 mês, 13 medições até 18h (computador em 16/10)', async () => {
     assert.equal(await page.evaluate(() => new Date(Date.now()).toISOString().slice(0, 10)), '2026-10-16', 'o relógio do computador no teste é 16/10');
     await irPara('historico');
-    assert.equal(await page.evaluate(() => Tempo.hoje()), '2026-10-19');
-    assert.match(await textoDe('#tituloMedicoes'), /19\/10\/2026/);
+    assert.equal(await page.evaluate(() => Tempo.hoje()), '2026-10-26');
+    assert.match(await textoDe('#tituloMedicoes'), /26\/10\/2026/);
     assert.equal(await page.locator('#tabela tbody tr').count(), 13);
     const horas = await page.$$eval('#tabela tbody tr td:first-child', tds => tds.map(t => t.textContent.trim()));
     assert.deepEqual(horas, ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00']);
     const per = async v => { await periodo(v); await page.waitForTimeout(120); return page.evaluate(() => { const p = periodoAtual; return [p.inicio, p.fim, p.dias]; }); };
-    assert.deepEqual(await per('hoje'), ['2026-10-19', '2026-10-19', 1]);
-    assert.deepEqual(await per('7dias'), ['2026-10-13', '2026-10-19', 7]);
-    assert.deepEqual(await per('1mes'), ['2026-09-20', '2026-10-19', 30]);
-    assert.equal((await pagInfo()).dataTxt, '19/10/2026', 'o dia mais recente da navegação é 19/10/2026');
-    // Hoje: nenhum dado fora de 19/10 e nenhum evento aberto (tudo já terminou)
+    assert.deepEqual(await per('hoje'), ['2026-10-26', '2026-10-26', 1]);
+    assert.deepEqual(await per('7dias'), ['2026-10-20', '2026-10-26', 7]);
+    assert.deepEqual(await per('1mes'), ['2026-09-27', '2026-10-26', 30]);
+    assert.equal((await pagInfo()).dataTxt, '26/10/2026', 'o dia mais recente da navegação é 26/10/2026');
+    // Hoje: nenhum dado fora de 26/10 e nenhum evento aberto (tudo já terminou)
     await periodo('hoje'); await page.waitForTimeout(120);
-    assert.equal(await page.evaluate(() => dados.linhas.every(l => l.dia === '2026-10-19') && dados.eventos.every(e => e.dia === '2026-10-19' && !e.aberto)), true);
+    assert.equal(await page.evaluate(() => dados.linhas.every(l => l.dia === '2026-10-26') && dados.eventos.every(e => e.dia === '2026-10-26' && !e.aberto)), true);
     // Dashboard: 13 pontos, termina às 18h, 7 rótulos
     await irPara('dashboard');
     assert.equal(await page.locator('#grafico svg circle.ponto').count(), 13);
@@ -497,12 +497,12 @@ async function escolherData(campo, iso) {
     assert.ok(cores.every(([lig, f]) => f === (lig ? '#15803d' : '#e0141e')), 'pontos verdes com a bomba ligada e vermelhos desligada');
     assert.ok(cores.some(c => !c[0]) && cores.length - cores.filter(c => !c[0]).length >= 1, 'o dia tem pontos dos dois estados');
     assert.deepEqual(await page.$$eval('#grafico svg text.rotulo-hora', ts => ts.map(t => t.textContent)), ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00']);
-    assert.equal(await page.evaluate(() => dadosPeriodo.grupos.filter(g => g.dia === '2026-10-19' && g.umidade != null).map(g => g.hora.slice(11, 16)).pop()), '18:00');
-    // calendário: 19/10 habilitado, 22/10 (futuro de referência) desabilitado
+    assert.equal(await page.evaluate(() => dadosPeriodo.grupos.filter(g => g.dia === '2026-10-26' && g.umidade != null).map(g => g.hora.slice(11, 16)).pop()), '18:00');
+    // calendário: 26/10 habilitado, 29/10 (futuro de referência) desabilitado
     await page.click('.periodo-opcoes button[data-valor="personalizado"]'); await page.click('.data-btn[data-campo=ini]'); await page.waitForSelector('.calendario');
-    assert.equal(await page.locator('.calendario [data-dia="2026-10-19"]').isEnabled(), true);
-    assert.equal(await page.locator('.calendario [data-dia="2026-10-19"]').getAttribute('class').then(c => /hoje/.test(c)), true, '19/10 é marcado como hoje');
-    assert.equal(await page.locator('.calendario [data-dia="2026-10-20"]').count() ? await page.locator('.calendario [data-dia="2026-10-20"]').isDisabled() : true, true);
+    assert.equal(await page.locator('.calendario [data-dia="2026-10-26"]').isEnabled(), true);
+    assert.equal(await page.locator('.calendario [data-dia="2026-10-26"]').getAttribute('class').then(c => /hoje/.test(c)), true, '26/10 é marcado como hoje');
+    assert.equal(await page.locator('.calendario [data-dia="2026-10-27"]').count() ? await page.locator('.calendario [data-dia="2026-10-27"]').isDisabled() : true, true);
     await page.keyboard.press('Escape');
   });
 
@@ -749,39 +749,39 @@ async function escolherData(campo, iso) {
   });
 
   /* ---------------- 28 ---------------- */
-  await teste('28 Demonstração em 19/10/2026: >= 2 medições no dia, as mesmas em todos os filtros e telas, sem duplicar nem mudar', async () => {
+  await teste('28 Demonstração em 26/10/2026: >= 2 medições no dia, as mesmas em todos os filtros e telas, sem duplicar nem mudar', async () => {
     const info = () => page.evaluate(() => {
-      const est = mockSerie(mockPropriedadeDoUsuario(1).id), um = Demo.leituras(est, '2026-10-19', '2026-10-19', ['umidade_solo']);
+      const est = mockSerie(mockPropriedadeDoUsuario(1).id), um = Demo.leituras(est, '2026-10-26', '2026-10-26', ['umidade_solo']);
       const todas = Demo.leituras(est, '2026-08-01', '2026-10-31');
       let h = 0; todas.forEach(l => { const t = l.sensor_id + l.valor + l.hora_leitura; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; });
       return { dia: um.map(l => [l.hora_leitura, l.valor]), total: todas.length, ate: todas.reduce((a, l) => l.hora_leitura > a ? l.hora_leitura : a, ''), de: todas.reduce((a, l) => !a || l.hora_leitura < a ? l.hora_leitura : a, ''), hash: h };
     });
     const antes = await info();
-    assert.ok(antes.dia.length >= 2, 'pelo menos 2 medições em 19/10/2026: ' + antes.dia.length);
+    assert.ok(antes.dia.length >= 2, 'pelo menos 2 medições em 26/10/2026: ' + antes.dia.length);
     assert.equal(new Set(antes.dia.map(d => d[0])).size, antes.dia.length, 'sem duplicatas');
-    assert.ok(antes.dia.every(([h, v]) => h.startsWith('2026-10-19T') && v >= 6 && v <= 98), 'horários coerentes e valores plausíveis');
+    assert.ok(antes.dia.every(([h, v]) => h.startsWith('2026-10-26T') && v >= 6 && v <= 98), 'horários coerentes e valores plausíveis');
     assert.deepEqual(antes.dia.slice(0, 13).map(d => d[0].slice(11, 16)), ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'].slice(0, Math.min(13, antes.dia.length)), 'padrão horário 06h–18h preservado');
-    assert.ok(antes.de.startsWith('2026-08-01T06') && antes.ate.startsWith('2026-10-19'), 'histórico de 01/08 a 19/10 preservado; nada depois de 19/10');
+    assert.ok(antes.de.startsWith('2026-08-01T06') && antes.ate.startsWith('2026-10-26'), 'histórico de 01/08 a 26/10 preservado; nada depois de 26/10');
     const contagem = async () => (await page.$$eval('#tabela tbody tr td:first-child', t => t.map(x => x.textContent.trim())));
     const esperadoHoras = antes.dia.map(d => d[0].slice(11, 16));
-    // Histórico: Hoje, 7 dias, 1 mês e Personalizado mostram as MESMAS medições de 19/10 (uma vez cada)
+    // Histórico: Hoje, 7 dias, 1 mês e Personalizado mostram as MESMAS medições de 26/10 (uma vez cada)
     await irPara('historico');
     for (const f of ['hoje', '7dias', '1mes']) {
       await periodo(f); await page.waitForTimeout(150);
-      assert.deepEqual(await contagem(), esperadoHoras, `Histórico ${f}: medições de 19/10`);
+      assert.deepEqual(await contagem(), esperadoHoras, `Histórico ${f}: medições de 26/10`);
     }
     await page.click('.periodo-opcoes button[data-valor="personalizado"]');
-    await escolherData('ini', '2026-10-17'); await escolherData('fim', '2026-10-19'); await page.click('.f-aplicar'); await page.waitForTimeout(200);
-    assert.deepEqual(await contagem(), esperadoHoras, 'Histórico personalizado 17–19/10');
+    await escolherData('ini', '2026-10-24'); await escolherData('fim', '2026-10-26'); await page.click('.f-aplicar'); await page.waitForTimeout(200);
+    assert.deepEqual(await contagem(), esperadoHoras, 'Histórico personalizado 17–26/10');
     for (let i = 0; i < 3; i++) { await periodo('hoje'); await periodo('1mes'); await periodo('7dias'); }
     await page.waitForTimeout(150);
     assert.deepEqual(await contagem(), esperadoHoras, 'depois de alternar filtros várias vezes: sem duplicar');
-    // Dashboard e Consumo/Irrigações usam os mesmos registros (leituras e eventos de 19/10)
+    // Dashboard e Consumo/Irrigações usam os mesmos registros (leituras e eventos de 26/10)
     await irPara('dashboard'); await periodo('hoje'); await page.waitForTimeout(200);
-    assert.equal(await page.locator('#grafico circle.ponto').count(), antes.dia.length, 'Dashboard: um ponto por medição de 19/10');
+    assert.equal(await page.locator('#grafico circle.ponto').count(), antes.dia.length, 'Dashboard: um ponto por medição de 26/10');
     assert.equal((await textoDe('#subGrafico')).trim(), `${antes.dia.length} leituras`);
-    const eventosHoje = await page.evaluate(() => Demo.eventos(mockSerie(mockPropriedadeDoUsuario(1).id), '2026-10-19', '2026-10-19').map(e => e.iniciado_em.slice(11, 16) + '-' + e.encerrado_em.slice(11, 16)));
-    assert.deepEqual(eventosHoje, ['08:00-10:00', '15:00-17:00'], 'duas irrigações em 19/10/2026 (apresentação)');
+    const eventosHoje = await page.evaluate(() => Demo.eventos(mockSerie(mockPropriedadeDoUsuario(1).id), '2026-10-26', '2026-10-26').map(e => e.iniciado_em.slice(11, 16) + '-' + e.encerrado_em.slice(11, 16)));
+    assert.deepEqual(eventosHoje, ['08:00-10:00', '15:00-17:00'], 'duas irrigações em 26/10/2026 (apresentação)');
     await irPara('irrigacoes'); await periodo('hoje'); await page.waitForTimeout(150);
     assert.equal(await page.locator('#eventos .evento').count(), eventosHoje.length);
     await irPara('consumo'); await periodo('hoje'); await page.waitForTimeout(150);
@@ -897,9 +897,9 @@ async function escolherData(campo, iso) {
       await periodo('1mes'); await page.waitForTimeout(150);
       assert.match(await textoDe(sel), p === 'historico' ? /Nenhuma medição registrada no mês/ : /Nenhuma irrigação registrada no mês/, p + ' 1 mês');
     }
-    // conta nova do demo: nenhuma medição simulada da conta de demonstração (nem as de 19/10/2026)
-    assert.equal(await page.evaluate(() => Demo.leituras(Demo.estado(), '2026-10-19', '2026-10-19').length > 0 && mockLeiturasPeriodo(2, '2026-08-01', '2026-10-19').length), 0, 'conta nova não herda as medições do demo');
-    assert.equal(await page.evaluate(() => mockEventosPeriodo(2, '2026-08-01', '2026-10-19').length), 0);
+    // conta nova do demo: nenhuma medição simulada da conta de demonstração (nem as de 26/10/2026)
+    assert.equal(await page.evaluate(() => Demo.leituras(Demo.estado(), '2026-10-26', '2026-10-26').length > 0 && mockLeiturasPeriodo(2, '2026-08-01', '2026-10-26').length), 0, 'conta nova não herda as medições do demo');
+    assert.equal(await page.evaluate(() => mockEventosPeriodo(2, '2026-08-01', '2026-10-26').length), 0);
     await page.screenshot({ path: path.join(SAIDA, 'estado-vazio-consumo.png') });
     await page.evaluate(() => { sessionStorage.clear(); });
     await entrar();
