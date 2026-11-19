@@ -36,8 +36,10 @@ const int PINO_VAZAO  = 27;
 const int VALOR_SECO    = 2620;  // sensor no ar
 const int VALOR_MOLHADO = 930;   // sensor na agua
 
-// Sensor de vazao: 7.5 pulsos por segundo = 1 L/min
-const float FATOR_VAZAO = 7.5;
+// Sensor de vazao: pulsos por segundo para cada 1 L/min.
+// O fabricante indica 7.5, mas com a bomba de diafragma a helice gera pulsos extras.
+// Valor calibrado em 19/11/2026 passando 1 litro medido pelo sistema.
+const float FATOR_VAZAO = 43.5;
 
 // Limites padrao (%). Sao substituidos pelos limites cadastrados no sistema.
 float limiteLigar    = 18;
@@ -70,8 +72,15 @@ unsigned long ultimoWifi    = 0;
 unsigned long ultimaTentativaIrrigacao = 0;
 bool configCarregada = false;
 
+volatile unsigned long ultimoPulso = 0;
+
+// Ignora pulsos com menos de 4 ms de intervalo (ruido na borda do sinal).
 void IRAM_ATTR contarPulso() {
-  pulsos++;
+  unsigned long agora = micros();
+  if (agora - ultimoPulso >= 4000) {
+    pulsos++;
+    ultimoPulso = agora;
+  }
 }
 
 int lerUmidade() {

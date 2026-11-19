@@ -17,6 +17,7 @@ O ESP32 lê a umidade do solo e a vazão de água, decide sozinho quando ligar e
 | Bomba | Bomba diafragma 12 V (tipo 385) |
 | Fonte | 12 V, 2 A |
 | Proteção | Diodo 1N4007 nos terminais da bomba e fusível na linha + da fonte |
+| Resistor | 10 kΩ (pull-up do sinal do sensor de vazão) |
 | Montagem | Protoboard 830 pontos, jumpers macho-fêmea e macho-macho, mangueira |
 
 ## Pinagem
@@ -56,6 +57,7 @@ Cada sinal se encontra com o seu componente numa fileira do meio da protoboard (
 | 13 | Sensor de vazão, sinal (amarelo) | Fileira 30, furo c | Macho-macho |
 | 14 | Sensor de vazão, + (vermelho) | Borda 3,3V, linha vermelha | Macho-macho |
 | 15 | Sensor de vazão, − (preto) | Borda 5V, linha azul | Macho-macho |
+| 16 | Resistor 10 kΩ | Entre a fileira 30 e a borda 3,3V, linha vermelha | Macho-macho nas duas pontas |
 
 ### Circuito de 12 V (fora da protoboard)
 
@@ -120,7 +122,17 @@ Cada sensor tem valores um pouco diferentes. Para recalibrar, leia o valor bruto
 - Umidade **a partir de 30%**: desliga a bomba.
 - Entre os dois valores: mantém o estado atual, para a bomba não ficar ligando e desligando.
 
-Os limites padrão são substituídos pelos limites cadastrados na propriedade, que o ESP32 busca na API a cada minuto. A vazão é calculada pelos pulsos do YF-S201 (7,5 pulsos por segundo = 1 L/min).
+Os limites padrão são substituídos pelos limites cadastrados na propriedade, que o ESP32 busca na API a cada minuto.
+
+## Calibração do sensor de vazão
+
+O fabricante do YF-S201 indica 7,5 pulsos por segundo para cada 1 L/min. Com a bomba de diafragma, a água sai em pulsos e a hélice do sensor gera contagens extras, então esse valor mediu cerca de 6 vezes mais água do que passou de verdade. Três correções foram aplicadas:
+
+1. **Filtro no código:** pulsos com menos de 4 ms de intervalo são ignorados (ruído na borda do sinal).
+2. **Resistor de 10 kΩ** entre o sinal do sensor (fileira do D27) e o 3,3 V, para deixar o sinal mais firme.
+3. **Fator calibrado:** passando 1 litro medido pelo sistema, o fator ficou em **43,5** (`FATOR_VAZAO`). Com ele, a vazão medida com a bomba ficou em torno de 3 L/min.
+
+Para recalibrar, reinicie o ESP32, passe um volume conhecido pela bomba e ajuste: `novo fator = fator atual × (total medido ÷ volume real)`.
 
 ## Comunicação com a API
 
@@ -142,5 +154,6 @@ Todas as requisições enviam a chave no cabeçalho `X-Chave-Dispositivo`.
 | O Wi-Fi não conecta ou demora muito | A placa veio com o MAC de fábrica zerado (00:00:00:00:00:00) | O firmware define um MAC válido com `esp_wifi_set_mac` |
 | O Wi-Fi cai de tempos em tempos (motivo 200) | Modo de economia de energia do Wi-Fi | O firmware desliga a economia com `WiFi.setSleep(false)` |
 | Umidade em 100% o tempo todo | Sensor desconectado ou sem energia | Conferir AOUT no D34, VCC no 3,3 V e GND |
+| Vazão muito acima do real | Pulsos extras da bomba de diafragma e ruído no sinal | Filtro de 4 ms, resistor de 10 kΩ e `FATOR_VAZAO` calibrado |
 | Umidade alta com o sensor no ar | Sensor úmido ou encostado numa superfície | Secar o sensor e segurá-lo no ar |
 | Rede do celular não conecta | Roteador do celular em WPA3 ou 5 GHz | Configurar WPA2 e 2,4 GHz |
