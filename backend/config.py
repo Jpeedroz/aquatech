@@ -75,6 +75,7 @@ def carregar_config():
         'MINUTOS_VALIDADE_LINK': 30,             # validade dos links enviados por e-mail
         # clima da região (API Open-Meteo, sem chave): temperatura no Dashboard e previsão de chuva para o ESP32
         'CLIMA_ATIVO': _verdadeiro('CLIMA_ATIVO', True),
+        'CLIMA_SIMULAR_CHUVA': _verdadeiro('CLIMA_SIMULAR_CHUVA'),   # demonstração: força "chuva prevista" (a tela avisa que é simulação)
         'CLIMA_LOCAL': _texto('CLIMA_LOCAL', 'Juazeiro do Norte - CE'),
         'CLIMA_LATITUDE': _decimal('CLIMA_LATITUDE', -7.2131),
         'CLIMA_LONGITUDE': _decimal('CLIMA_LONGITUDE', -39.3153),

@@ -67,12 +67,14 @@ async function atualizarClima() {
     chip.hidden = true; return;
   }
   $('climaRotulo').textContent = `Clima em ${c.local}`;
-  $('temperatura').textContent = `${formatarNumero(c.temperatura, 0, 1)} °C`;
+  $('temperatura').textContent = c.temperatura == null ? '—' : `${formatarNumero(c.temperatura, 0, 1)} °C`;
   chip.hidden = false;
   chip.className = 'chip-chuva ' + (c.chuva_prevista ? 'chuva' : 'seco');
   chip.textContent = c.chovendo ? 'Chovendo' : c.chuva_prevista ? 'Chuva prevista' : 'Sem chuva';
   const hora = c.atualizado_em ? ` · ${c.atualizado_em.slice(11, 16)}` : '';
-  $('climaNota').textContent = c.chuva_prevista
+  if (c.simulado) chip.textContent = 'Chuva simulada';
+  $('climaNota').textContent = c.simulado ? 'Demonstração: irrigação adiada, exceto se o solo ficar crítico'
+    : c.chuva_prevista
     ? `${c.situacao} (${formatarNumero(c.chuva_proximas_horas_mm, 0, 1)} mm): irrigação adiada, exceto se o solo ficar crítico`
     : `Previsão do tempo ${c.fonte}${hora}`;
 }

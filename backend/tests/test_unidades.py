@@ -204,3 +204,9 @@ class TestClima(unittest.TestCase):
 
     def test_desativado(self):
         self.assertIs(clima.clima_atual({**self.CFG, 'CLIMA_ATIVO': False})['disponivel'], False)
+
+    def test_simulacao_de_chuva_para_demonstracao(self):
+        r = clima.clima_atual({**self.CFG, 'CLIMA_SIMULAR_CHUVA': True}, buscar=lambda la, lo: self.resposta())
+        self.assertIs(r['chuva_prevista'], True)
+        self.assertIs(r['simulado'], True)                               # a tela avisa que é simulação
+        self.assertEqual(r['temperatura'], 31.5)                         # a temperatura continua real

@@ -40,6 +40,7 @@ O back-end consulta a API pública [Open-Meteo](https://open-meteo.com) (gratuit
 * **ESP32:** a rota `GET /api/dispositivos/<codigo>/configuracao` devolve `chuva_prevista` e `umidade_critica`.
 * Considera "chuva prevista" quando há 0,1 mm ou mais de chuva agora, ou 1 mm ou mais somados nas próximas 3 horas.
 * É **previsão meteorológica da cidade**, não leitura de sensor da propriedade. Sem internet, o cartão mostra "indisponível" e a irrigação segue normal pela umidade do solo.
+* **Demonstração:** com `CLIMA_SIMULAR_CHUVA=true` a chuva é forçada (o dashboard mostra "Chuva simulada" e o ESP32 adia a irrigação). No PowerShell: `$env:CLIMA_SIMULAR_CHUVA="true"; docker compose up -d`. Para voltar: `$env:CLIMA_SIMULAR_CHUVA="false"; docker compose up -d`.
 * A cidade é configurada no `.env`: `CLIMA_LOCAL`, `CLIMA_LATITUDE` e `CLIMA_LONGITUDE` (padrão: Juazeiro do Norte - CE).
 
 ## Execução:

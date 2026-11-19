@@ -42,6 +42,7 @@ services:
       CLIMA_LOCAL: ${CLIMA_LOCAL:-Juazeiro do Norte - CE}   # cidade da temperatura e da previsão de chuva (Open-Meteo)
       CLIMA_LATITUDE: ${CLIMA_LATITUDE:--7.2131}
       CLIMA_LONGITUDE: ${CLIMA_LONGITUDE:--39.3153}
+      CLIMA_SIMULAR_CHUVA: ${CLIMA_SIMULAR_CHUVA:-false}   # demonstração: true força "chuva prevista" no dashboard e no ESP32
       FLASK_HOST: 0.0.0.0
       FLASK_PORT: 5000
     ports:

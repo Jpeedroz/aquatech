@@ -72,6 +72,7 @@ def interpretar(dados, cfg):
         'situacao': situacao,
         'atualizado_em': atual.get('time'),         # hora local da cidade (timezone=auto)
         'fonte': 'Open-Meteo',
+        'simulado': False,
     }
 
 
@@ -80,13 +81,22 @@ def _indisponivel(cfg, motivo):
         'disponivel': False, 'local': cfg['CLIMA_LOCAL'], 'temperatura': None,
         'chuva_agora_mm': None, 'chuva_proximas_horas_mm': None, 'probabilidade_chuva': None,
         'horas_previsao': HORAS_PREVISAO, 'chovendo': False, 'chuva_prevista': False,
-        'situacao': motivo, 'atualizado_em': None, 'fonte': 'Open-Meteo',
+        'situacao': motivo, 'atualizado_em': None, 'fonte': 'Open-Meteo', 'simulado': False,
     }
 
 
 def clima_atual(cfg, buscar=None):
     """Resumo do clima da região configurada. Nunca lança erro: sem dados, devolve disponivel=False
-    e chuva_prevista=False (sem previsão, a irrigação segue normal pela umidade do solo)."""
+    e chuva_prevista=False (sem previsão, a irrigação segue normal pela umidade do solo).
+    Com CLIMA_SIMULAR_CHUVA (demonstração), a chuva é forçada e a resposta traz simulado=True."""
+    resultado = _clima_real(cfg, buscar)
+    if cfg.get('CLIMA_SIMULAR_CHUVA'):
+        resultado = {**resultado, 'disponivel': True, 'chovendo': True, 'chuva_prevista': True, 'simulado': True,
+                     'situacao': 'Chuva SIMULADA para demonstração'}
+    return resultado
+
+
+def _clima_real(cfg, buscar=None):
     if not cfg.get('CLIMA_ATIVO', True):
         return _indisponivel(cfg, 'Consulta de clima desativada')
     chave = (cfg['CLIMA_LATITUDE'], cfg['CLIMA_LONGITUDE'])
