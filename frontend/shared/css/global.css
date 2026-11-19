@@ -807,11 +807,6 @@ a {
     border-radius: 999px;
 }
 
-.kpi-solo .kpi-tag {
-    background: rgba(255,255,255,.2);
-    color: #fff;
-}
-
 .kpi-tag-periodo {
     background: #e3f0fa;
     color: #0b5d94;

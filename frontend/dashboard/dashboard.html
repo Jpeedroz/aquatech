@@ -36,10 +36,13 @@
             <div class="kpi-valor"><i class="ponto" id="pontoIrrig"></i><span id="irrigStatus">—</span></div>
             <div class="kpi-nota" id="irrigNota"></div>
           </article>
-          <article class="card kpi">
-            <div class="kpi-rotulo"><span>Temperatura atual</span><em class="kpi-tag">agora</em></div>
-            <div class="kpi-valor" id="temperatura">—</div>
-            <div class="kpi-nota">condição atual do ambiente</div>
+          <article class="card kpi kpi-clima" id="cardClima">
+            <div class="kpi-rotulo"><span id="climaRotulo">Clima na região</span><em class="kpi-tag">agora</em></div>
+            <div class="kpi-linha">
+              <div class="kpi-valor" id="temperatura">—</div>
+              <span class="chip-chuva" id="climaChuva" hidden></span>
+            </div>
+            <div class="kpi-nota" id="climaNota">Consultando a previsão do tempo...</div>
           </article>
           <article class="card kpi">
             <div class="kpi-rotulo"><span id="rotuloConsumo">Consumo hoje</span><em class="kpi-tag kpi-tag-periodo" id="tagConsumo">período</em></div>
@@ -56,11 +59,12 @@
             <div id="filtro"></div>
           </header>
           <div class="legenda">
-            <span><i class="leg-ponto verde"></i>Irrigação ligada</span>
-            <span><i class="leg-ponto vermelho"></i>Irrigação desligada</span>
-            <span><i class="leg-linha"></i>Limite de irrigação</span>
-            <span><i class="leg-faixa"></i>Irrigação ativa</span>
-            <span class="dica-clique">Clique em um ponto para ver o indicador daquela medição</span>
+            <span><i class="leg-curva"></i>Umidade do solo</span>
+            <span><i class="leg-faixa"></i>Irrigação ligada</span>
+            <span><i class="leg-ponto verde"></i>Início da irrigação</span>
+            <span><i class="leg-linha laranja"></i>Liga abaixo do limite</span>
+            <span><i class="leg-linha verde"></i>Desliga no limite</span>
+            <span class="dica-clique">Passe o mouse ou clique no gráfico para ver cada medição</span>
           </div>
           <div id="grafico" aria-live="polite"></div>
         </article>

@@ -110,6 +110,14 @@ async function getResumoPainel(opcoes = {}) {
   if (!USAR_MOCK) return (await requisicao('/dashboard', { signal: opcoes.signal })).resumo;
   return mockResumoDashboard(idUsuario());
 }
+// GET /api/clima → { disponivel, local, temperatura, chuva_prevista, chovendo, situacao, chuva_proximas_horas_mm, atualizado_em, fonte }
+// Previsão do tempo da região (API Open-Meteo, consultada pelo back-end). No modo demo, valores fixos de exemplo.
+async function getClima(opcoes = {}) {
+  if (!USAR_MOCK) return requisicao('/clima', { signal: opcoes.signal });
+  return { disponivel: true, local: 'Juazeiro do Norte - CE', temperatura: 31.4, chuva_agora_mm: 0, chuva_proximas_horas_mm: 0,
+           probabilidade_chuva: 10, horas_previsao: 3, chovendo: false, chuva_prevista: false, situacao: 'Sem chuva prevista',
+           atualizado_em: null, fonte: 'Open-Meteo (exemplo do modo demonstração)' };
+}
 // GET /api/historico?inicio=&fim= → { leituras: [{sensor_id,tipo,valor,hora_leitura,teste?}], eventos: [...] }
 // As leituras incluem umidade, temperatura e vazão (a vazão serve para o consumo acumulado).
 async function getHistoricoData(inicio, fim, opcoes = {}) {
