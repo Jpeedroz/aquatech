@@ -22,6 +22,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     aoMudar: ({ periodo }) => carregarDoPeriodo(periodo),
     aoErro: e => Estado.erro($('grafico'), e.message, () => window.location.reload())
   });
+  // Atualização automática a cada 15 s (o ESP32 envia leituras a cada 10 s). Aba em segundo plano não consulta.
+  setInterval(async () => {
+    if (document.hidden || !periodoAtual) return;
+    const ok = await atualizarResumo();
+    if (ok && periodoAtual.tipo === 'hoje') carregarDoPeriodo(periodoAtual, true, true);
+  }, 15000);
 });
 
 async function atualizarResumo() {
@@ -77,12 +83,14 @@ function renderizarSolo() {
   }
 }
 
-async function carregarDoPeriodo(periodo, manterDia) {
+async function carregarDoPeriodo(periodo, manterDia, silencioso) {
   periodoAtual = periodo;
-  selecionada = null; renderizarSolo();
+  if (!silencioso) {                                   // atualização automática: sem "carregando" e sem perder a seleção
+    selecionada = null; renderizarSolo();
+    Estado.carregando($('grafico')); $('resumoUmidade').hidden = true;
+    paginacao.esconder();
+  }
   const manter = manterDia ? paginacao.dia : null;
-  Estado.carregando($('grafico')); $('resumoUmidade').hidden = true;
-  paginacao.esconder();
   try {
     const r = await carregarPeriodo(sinal => getHistoricoData(periodo.inicio, periodo.fim, { signal: sinal }));
     if (!r) return;                                  // resposta antiga: ignora
