@@ -45,6 +45,14 @@ const float FATOR_VAZAO = 43.5;
 float limiteLigar    = 18;
 float limiteDesligar = 30;
 
+// Previsao de chuva: vem do servidor (que consulta a API Open-Meteo) junto com os limites.
+// Com chuva prevista, a irrigacao e adiada, exceto se o solo ficar abaixo da umidade critica.
+bool  chuvaPrevista  = false;
+int   umidadeCritica = 8;
+bool  chuvaSimulada  = false;            // demonstracao: digite c no Monitor Serial
+unsigned long ultimaConfigOk = 0;
+const unsigned long VALIDADE_PREVISAO = 600000;   // sem falar com o servidor ha 10 min, ignora a previsao
+
 // Intervalos (milissegundos)
 const unsigned long INTERVALO_LEITURA = 1000;   // le sensores e decide sobre a bomba
 const unsigned long INTERVALO_ENVIO   = 10000;  // envia leituras para a API
@@ -101,7 +109,7 @@ String url(const char* rota) {
 // Envia uma requisicao e devolve o codigo HTTP (ou negativo em caso de falha)
 int requisicao(const char* metodo, const char* rota, const String& corpo, String* resposta) {
   HTTPClient http;
-  http.setTimeout(3000);
+  http.setTimeout(5000);
   http.begin(url(rota));
   http.addHeader("X-Chave-Dispositivo", CHAVE_DISPOSITIVO);
   if (corpo.length() > 0) {
@@ -153,6 +161,27 @@ bool lerNumeroJson(const String& json, const char* chave, float& valor) {
   return true;
 }
 
+// Le um valor verdadeiro/falso do JSON pela chave, ex.: "chuva_prevista": true
+bool lerBoolJson(const String& json, const char* chave, bool& valor) {
+  String procura = String("\"") + chave + "\"";
+  int pos = json.indexOf(procura);
+  if (pos < 0) return false;
+  pos = json.indexOf(':', pos + procura.length());
+  if (pos < 0) return false;
+  pos++;
+  while (pos < (int)json.length() && json[pos] == ' ') pos++;
+  if (json.startsWith("true", pos)) { valor = true; return true; }
+  if (json.startsWith("false", pos)) { valor = false; return true; }
+  return false;
+}
+
+// Ha chuva acontecendo ou prevista? (sem dado recente do servidor, considera que nao)
+bool haChuva() {
+  if (chuvaSimulada) return true;
+  if (ultimaConfigOk == 0 || millis() - ultimaConfigOk > VALIDADE_PREVISAO) return false;
+  return chuvaPrevista;
+}
+
 void buscarConfiguracao() {
   String resposta;
   int codigo = requisicao("GET", "/configuracao", "", &resposta);
@@ -174,6 +203,16 @@ void buscarConfiguracao() {
     Serial.print(limiteDesligar);
     Serial.println("%");
   }
+  bool chuva;
+  if (lerBoolJson(resposta, "chuva_prevista", chuva)) {
+    if (chuva != chuvaPrevista) {
+      Serial.println(chuva ? "[CHUVA] Servidor informou chuva prevista" : "[CHUVA] Sem chuva prevista");
+    }
+    chuvaPrevista = chuva;
+    float critica;
+    if (lerNumeroJson(resposta, "umidade_critica", critica)) umidadeCritica = (int)critica;
+    ultimaConfigOk = millis();
+  }
 }
 
 void lerSensoresEControlar(unsigned long agora) {
@@ -191,14 +230,25 @@ void lerSensoresEControlar(unsigned long agora) {
 
   umidadeAtual = lerUmidade();
 
-  if (!bombaLigada && umidadeAtual < limiteLigar) {
+  // Com chuva prevista, so irriga se o solo estiver criticamente seco. Nesse caso a bomba
+  // desliga 5 pontos acima do critico (folga para o rele nao ficar ligando e desligando).
+  bool chuva = haChuva();
+  bool adiarPorChuva = chuva && umidadeAtual >= umidadeCritica;
+  bool desligarPorChuva = chuva && umidadeAtual >= umidadeCritica + 5;
+
+  if (!bombaLigada && umidadeAtual < limiteLigar && adiarPorChuva) {
+    Serial.println("[CHUVA] Solo seco, mas ha chuva prevista: irrigacao adiada");
+  } else if (!bombaLigada && umidadeAtual < limiteLigar) {
     bombaLigada = true;
     digitalWrite(PINO_RELE, HIGH);
     litrosIrrigacao = 0;
     irrigacaoPendente = true;
     pendenteLigada = true;
     pendenteUmidade = umidadeAtual;
-  } else if (bombaLigada && umidadeAtual >= limiteDesligar) {
+  } else if (bombaLigada && (umidadeAtual >= limiteDesligar || desligarPorChuva)) {
+    if (umidadeAtual < limiteDesligar) {
+      Serial.println("[CHUVA] Chuva prevista: bomba desligada antes do limite");
+    }
     bombaLigada = false;
     digitalWrite(PINO_RELE, LOW);
     irrigacaoPendente = true;
@@ -215,7 +265,9 @@ void lerSensoresEControlar(unsigned long agora) {
   Serial.print(vazaoAtual);
   Serial.print(" L/min  |  Total: ");
   Serial.print(litrosTotais, 2);
-  Serial.print(" L  |  Wi-Fi: ");
+  Serial.print(" L  |  Chuva: ");
+  Serial.print(chuvaSimulada ? "SIMULADA" : (haChuva() ? "PREVISTA" : "nao"));
+  Serial.print("  |  Wi-Fi: ");
   Serial.println(WiFi.status() == WL_CONNECTED ? "OK" : "sem conexao");
 }
 
@@ -253,6 +305,15 @@ void setup() {
 
 void loop() {
   unsigned long agora = millis();
+
+  // Digite c no Monitor Serial para simular chuva (demonstracao)
+  while (Serial.available()) {
+    char tecla = Serial.read();
+    if (tecla == 'c' || tecla == 'C') {
+      chuvaSimulada = !chuvaSimulada;
+      Serial.println(chuvaSimulada ? "[CHUVA] Chuva SIMULADA ligada" : "[CHUVA] Chuva simulada desligada");
+    }
+  }
 
   if (agora - ultimaLeitura >= INTERVALO_LEITURA) {
     lerSensoresEControlar(agora);

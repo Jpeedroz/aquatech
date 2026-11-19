@@ -124,6 +124,16 @@ Cada sensor tem valores um pouco diferentes. Para recalibrar, leia o valor bruto
 
 Os limites padrão são substituídos pelos limites cadastrados na propriedade, que o ESP32 busca na API a cada minuto.
 
+### Previsão de chuva
+
+Junto com os limites, a API informa `chuva_prevista` (o servidor consulta a API Open-Meteo para a cidade configurada):
+
+- Com chuva prevista e o solo seco, a irrigação é **adiada**: o Serial mostra `[CHUVA] Solo seco, mas ha chuva prevista: irrigacao adiada`.
+- Se a bomba já estiver ligada e a chuva ficar prevista, ela desliga antes de chegar a 30%.
+- **Exceção de segurança:** abaixo de `umidade_critica` (8%) a bomba liga mesmo com chuva prevista, e desliga 5 pontos acima disso. A previsão pode errar e uma planta coberta não recebe chuva.
+- Se o ESP32 ficar 10 minutos sem resposta do servidor, ele ignora a previsão e irriga normalmente pela umidade.
+- **Demonstração:** com o Monitor Serial aberto, digite `c` e Enter para simular chuva. Digite `c` de novo para desligar a simulação.
+
 ## Calibração do sensor de vazão
 
 O fabricante do YF-S201 indica 7,5 pulsos por segundo para cada 1 L/min. Com a bomba de diafragma, a água sai em pulsos e a hélice do sensor gera contagens extras, então esse valor mediu cerca de 6 vezes mais água do que passou de verdade. Três correções foram aplicadas:
@@ -139,7 +149,7 @@ Para recalibrar, reinicie o ESP32, passe um volume conhecido pela bomba e ajuste
 | Quando | Rota |
 |---|---|
 | A cada 10 s | `POST /api/dispositivos/<codigo>/leituras` com `umidade_solo` e `vazao_agua` |
-| Ao ligar e a cada 60 s | `GET /api/dispositivos/<codigo>/configuracao` |
+| Ao ligar e a cada 60 s | `GET /api/dispositivos/<codigo>/configuracao` (limites e `chuva_prevista`) |
 | Quando a bomba liga ou desliga | `PUT /api/dispositivos/<codigo>/irrigacao`, com os litros medidos na irrigação |
 
 Todas as requisições enviam a chave no cabeçalho `X-Chave-Dispositivo`.
