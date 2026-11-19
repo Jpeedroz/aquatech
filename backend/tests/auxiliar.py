@@ -21,6 +21,7 @@ CONFIG_TESTE = {
     'CORS_ORIGENS': ['http://localhost:5500'],
     'EMAIL_MODO': 'console',
     'URL_SITE': 'http://localhost:5000',
+    'CLIMA_ATIVO': False,          # os testes nunca acessam a internet (veja TestClima)
 }
 
 

@@ -125,98 +125,134 @@ function redesenharAoGirar(el, desenhar) {            // girar o celular ou muda
 /* ---------- umidade do solo em um dia ----------
    dados: { dia, grupos (leituras agrupadas por horário), eventos (normalizados), liga, desliga, agora } */
 function graficoUmidade(el, { dia, grupos, eventos, liga, desliga, aoSelecionar, selecionada }) {
-  const pts = grupos.filter(g => g.umidade != null && g.dia === dia);          // TODAS as medições do dia, nos horários reais
+  const brutos = grupos.filter(g => g.umidade != null && g.dia === dia);       // TODAS as medições do dia, nos horários reais
   el.innerHTML = '';
-  if (!pts.length) { Estado.vazio(el, 'Sem leituras de umidade neste dia.', 'Escolha outro dia ou período.'); return; }
+  if (!brutos.length) { Estado.vazio(el, 'Sem leituras de umidade neste dia.', 'Escolha outro dia ou período.'); return; }
   const { compacto, L, baixo } = medidaGrafico(el);
-  const A = baixo ? 230 : compacto ? 300 : 310, m = compacto ? { e: 44, d: 12, t: 14, b: 40 } : { e: 50, d: 18, t: 16, b: 36 };
-  const F = compacto ? 12.5 : 10;                                                // tamanho das letras do gráfico
+  const A = baixo ? 240 : compacto ? 300 : 330, m = compacto ? { e: 40, d: 14, t: 18, b: 36 } : { e: 46, d: 20, t: 22, b: 34 };
+  const F = compacto ? 12.5 : 10.5;
   redesenharAoGirar(el, () => graficoUmidade(el, { dia, grupos, eventos, liga, desliga, aoSelecionar, selecionada }));
   const w = L - m.e - m.d, h = A - m.t - m.b;
   const minDia = ts => T_minDia(ts);
-  const vmax = Math.max(40, Math.ceil(Math.max(...pts.map(p => p.umidade), desliga || 0) / 10) * 10);
-  // escala padrão 06h–18h (medições horárias); se houver medição fora dessa faixa, a escala se amplia — nenhuma medição é escondida
-  const minimo = Math.min(...pts.map(p => T_minDia(p.hora))), maximo = Math.max(...pts.map(p => T_minDia(p.hora)));
-  const MIN0 = Math.min(6 * 60, Math.floor(minimo / 60) * 60), MIN1 = Math.max(18 * 60, Math.ceil(maximo / 60) * 60);
-  const PAD = compacto ? 14 : 22;                                     // folga lateral: o ponto das 06h/18h não encosta no eixo
-  const X = min => m.e + PAD + ((Math.min(MIN1, Math.max(MIN0, min)) - MIN0) / (MIN1 - MIN0)) * (w - 2 * PAD);
-  const Y = v => m.t + h - (v / vmax) * h;
-  const agora = Tempo.agora();
-  const fimLinha = pts[pts.length - 1].hora;
+  const agora = Tempo.agora(), ehHoje = dia === agora.slice(0, 10);
 
-  const wrap = document.createElement('div'); wrap.className = 'grafico-wrap';
-  let s = '';
-  for (let v = 0; v <= vmax; v += 10) {
-    s += `<line x1="${m.e}" x2="${L - m.d}" y1="${Y(v)}" y2="${Y(v)}" stroke="#e8edf2"/>
-          <text x="${m.e - 8}" y="${Y(v) + 3}" font-size="${F}" fill="#5b6778" text-anchor="end">${v}%</text>`;
-  }
-  const H0 = MIN0 / 60, H1 = MIN1 / 60;
-  const porHora = (w - 2 * PAD) / (H1 - H0), passoH = [1, 2, 3, 4, 6, 12].find(k => porHora * k >= (compacto ? 50 : 0)) || 12;
-  for (let hh = H0; hh <= H1; hh++) {                 // linhas de grade em todas as horas; RÓTULOS só de tempos em tempos (2h; no celular, o que couber)
-    s += `<line x1="${X(hh * 60)}" x2="${X(hh * 60)}" y1="${m.t}" y2="${m.t + h}" stroke="#f1f4f7"/>`;
-    if ((hh - H0) % (compacto ? passoH : 2) === 0) s += `<text class="rotulo-hora" x="${X(hh * 60)}" y="${A - 14}" font-size="${F}" fill="#5b6778" text-anchor="middle">${Tempo.dois(hh)}${compacto ? 'h' : ':00'}</text>`;
-  }
-  // faixa de irrigação (evento aberto vai até a última leitura/agora)
-  eventos.forEach(e => {
-    const ini = e.ini.slice(0, 10) < dia ? 0 : minDia(e.ini);
-    let fim = e.fim ? (e.fim.slice(0, 10) > dia ? 1440 : minDia(e.fim)) : minDia(dia === agora.slice(0, 10) ? agora : fimLinha);
-    if (e.ini.slice(0, 10) > dia || (e.fim && e.fim.slice(0, 10) < dia)) return;
-    if (Math.min(fim, MIN1) > Math.max(ini, MIN0)) s += `<rect class="faixa-irrig" x="${X(ini)}" y="${m.t}" width="${Math.max(2, X(fim) - X(ini))}" height="${h}" fill="#c9f2c7" opacity=".85"/>`;
-  });
-  if (desliga != null) s += `<line x1="${m.e}" x2="${L - m.d}" y1="${Y(desliga)}" y2="${Y(desliga)}" stroke="#1c8a4a" stroke-dasharray="5 4"/>
-    <text x="${L - m.d - 4}" y="${Y(desliga) - 5}" font-size="${F}" font-weight="600" fill="#1c6b3a" text-anchor="end">${compacto ? 'Desliga' : 'Desliga irrigação —'} ${formatarNumero(desliga)}%</text>`;
-  if (liga != null) s += `<line x1="${m.e}" x2="${L - m.d}" y1="${Y(liga)}" y2="${Y(liga)}" stroke="#9aa5b3" stroke-dasharray="5 4"/>
-    <text x="${L - m.d - 4}" y="${Y(liga) + F + 3}" font-size="${F}" font-weight="600" fill="#c4570c" text-anchor="end">${compacto ? 'Liga' : 'Liga irrigação —'} ${formatarNumero(liga)}%</text>`;
+  /* Eixo do tempo AJUSTADO aos dados: o ESP32 mede a cada poucos segundos, então uma escala fixa de 06h a 18h
+     espremeria tudo numa faixa estreita. O eixo vai da primeira à última medição (no dia de hoje, até agora). */
+  const t0 = minDia(brutos[0].hora), tUlt = minDia(brutos[brutos.length - 1].hora);
+  let t1 = ehHoje ? Math.max(tUlt, Math.min(minDia(agora), tUlt + 30)) : tUlt;
+  let MIN0 = t0, MIN1 = Math.max(t1, t0 + 30);
+  const folga = (MIN1 - MIN0) * 0.03; MIN0 = Math.max(0, MIN0 - folga); MIN1 = Math.min(1440, MIN1 + folga);
+  const X = min => m.e + ((Math.min(MIN1, Math.max(MIN0, min)) - MIN0) / (MIN1 - MIN0)) * w;
 
-  // a linha NÃO atravessa lacunas: se faltar uma medição (intervalo > 1,5× o intervalo típico entre medições), os pontos ficam separados
-  // e a lacuna recebe a legenda "sem medições". Nada é inventado entre dois pontos distantes.
-  const difs = pts.slice(1).map((p, i) => Tempo.minutosTs(p.hora) - Tempo.minutosTs(pts[i].hora)).sort((a, b) => a - b);
+  /* Muitas medições (uma a cada 10 s) viram a MÉDIA por fatia de ~3 px: a curva fica limpa e cada fatia
+     mostra no balão quantas leituras representa. Nenhum valor é inventado; lacunas sem medição continuam vazias. */
+  const difs = brutos.slice(1).map((p, i) => Tempo.minutosTs(p.hora) - Tempo.minutosTs(brutos[i].hora)).sort((a, b) => a - b);
   const tipico = difs.length ? difs[Math.floor(difs.length / 2)] : 60;
-  const limiteLacuna = Math.max(tipico * 1.5, 45);
-  let seg = [];
-  const linhas = [];
-  pts.forEach((p, i) => {
+  const limiteLacuna = Math.max(tipico * 6, 10);
+  const fatia = (MIN1 - MIN0) / (w / 3);
+  const segmentos = [];
+  let seg = [], balde = null;
+  const fecharBalde = () => { if (balde) { seg.push({ ...balde, umidade: balde.soma / balde.n, minuto: balde.somaMin / balde.n }); balde = null; } };
+  brutos.forEach((p, i) => {
+    const mn = minDia(p.hora);
+    if (i && Tempo.minutosTs(p.hora) - Tempo.minutosTs(brutos[i - 1].hora) > limiteLacuna) { fecharBalde(); segmentos.push(seg); seg = []; }
+    const chave = Math.floor((mn - MIN0) / fatia);
+    if (balde && balde.chave !== chave) fecharBalde();
+    if (!balde) balde = { chave, soma: 0, somaMin: 0, n: 0, min: Infinity, max: -Infinity };
+    balde.soma += p.umidade; balde.somaMin += mn; balde.n++; balde.hora = p.hora; balde.dia = p.dia;
+    balde.min = Math.min(balde.min, p.umidade); balde.max = Math.max(balde.max, p.umidade);
+    if (p.temperatura != null) balde.temperatura = p.temperatura;
+  });
+  fecharBalde(); segmentos.push(seg);
+  const pts = segmentos.flat();
+
+  const vmaxDado = Math.max(...brutos.map(p => p.umidade), desliga || 0);
+  const vmax = vmaxDado > 60 ? 100 : Math.max(40, Math.ceil((vmaxDado + 5) / 10) * 10);
+  const Y = v => m.t + h - (v / vmax) * h;
+
+  let s = `<defs>
+    <linearGradient id="gradUmidade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b86d1" stop-opacity=".26"/><stop offset="1" stop-color="#0b86d1" stop-opacity="0"/></linearGradient>
+    <clipPath id="recorteGrafico"><rect x="${m.e}" y="${m.t - 2}" width="${w}" height="${h + 4}"/></clipPath></defs>`;
+  // faixa "ideal" entre os limites (o objetivo do sistema é manter o solo aqui)
+  if (liga != null && desliga != null && desliga > liga)
+    s += `<rect x="${m.e}" y="${Y(desliga)}" width="${w}" height="${Y(liga) - Y(desliga)}" fill="#16a34a" opacity=".045"/>`;
+  const passoY = vmax > 60 ? 20 : 10;
+  for (let v = 0; v <= vmax; v += passoY) {
+    s += `<line x1="${m.e}" x2="${L - m.d}" y1="${Y(v)}" y2="${Y(v)}" stroke="${v ? '#eef2f6' : '#d5dce4'}"/>
+          <text x="${m.e - 8}" y="${Y(v) + 3.5}" font-size="${F}" fill="#7b8794" text-anchor="end">${v}%</text>`;
+  }
+  // rótulos de hora: passo escolhido para caber (5 min a 4 h), sempre em horários "redondos"
+  const maxRotulos = compacto ? 4 : Math.max(4, Math.floor(w / 110));
+  const passoT = [1, 2, 5, 10, 15, 20, 30, 60, 120, 180, 240].find(k => (MIN1 - MIN0) / k <= maxRotulos) || 240;
+  for (let t = Math.ceil(MIN0 / passoT) * passoT; t <= MIN1; t += passoT) {
+    const x = X(t), hh = Math.floor(t / 60), mm = Math.round(t % 60);
+    s += `<line x1="${x}" x2="${x}" y1="${m.t}" y2="${m.t + h}" stroke="#f3f5f8"/>
+          <line x1="${x}" x2="${x}" y1="${m.t + h}" y2="${m.t + h + 4}" stroke="#c5ced8"/>
+          <text x="${x}" y="${A - 12}" font-size="${F}" fill="#7b8794" text-anchor="middle">${Tempo.dois(hh)}:${Tempo.dois(mm)}</text>`;
+  }
+  // períodos com a irrigação ligada: faixa verde suave com uma tarja no topo
+  const faixas = [];
+  eventos.forEach(e => {
+    if (e.ini.slice(0, 10) > dia || (e.fim && e.fim.slice(0, 10) < dia)) return;
+    const ini = e.ini.slice(0, 10) < dia ? 0 : minDia(e.ini);
+    const fim = e.fim ? (e.fim.slice(0, 10) > dia ? 1440 : minDia(e.fim)) : minDia(ehHoje ? agora : brutos[brutos.length - 1].hora);
+    if (Math.min(fim, MIN1) <= Math.max(ini, MIN0)) return;
+    const x1 = X(ini), x2 = Math.max(X(fim), x1 + 2);
+    faixas.push({ x1, x2, aberto: !e.fim });
+    s += `<rect class="faixa-irrig" x="${x1.toFixed(1)}" y="${m.t}" width="${(x2 - x1).toFixed(1)}" height="${h}" fill="#22c55e" opacity=".10"/>
+          <rect x="${x1.toFixed(1)}" y="${m.t}" width="${(x2 - x1).toFixed(1)}" height="3" fill="#16a34a" opacity=".75"/>`;
+  });
+  // limites de irrigação (o texto tem contorno branco para continuar legível sobre a curva)
+  let textosLimite = '';                                                 // desenhados por último, acima da curva
+  const rotuloLimite = (v, cor, texto, acima) => {
+    textosLimite += `<text x="${L - m.d - 6}" y="${acima ? Y(v) - 6 : Y(v) + F + 4}" font-size="${F}" font-weight="600" fill="${cor}" text-anchor="end" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">${texto}</text>`;
+    return `<line x1="${m.e}" x2="${L - m.d}" y1="${Y(v)}" y2="${Y(v)}" stroke="${cor}" stroke-width="1.2" stroke-dasharray="6 5" opacity=".9"/>`;
+  };
+  if (desliga != null) s += rotuloLimite(desliga, '#15803d', `${compacto ? 'Desliga' : 'Desliga a irrigação em'} ${formatarNumero(desliga)}%`, true);
+  if (liga != null) s += rotuloLimite(liga, '#c2570c', `${compacto ? 'Liga' : 'Liga a irrigação abaixo de'} ${formatarNumero(liga)}%`, false);
+
+  // curva suave + área preenchida (cada trecho contínuo separado; lacunas sem medição ficam vazias)
+  segmentos.forEach((sg, i) => {
     if (i) {
-      const ant = pts[i - 1], dif = Tempo.minutosTs(p.hora) - Tempo.minutosTs(ant.hora);
-      if (dif > limiteLacuna) {
-        linhas.push(seg); seg = [];
-        if (dif >= 120) s += `<text class="legenda-lacuna" x="${((X(minDia(ant.hora)) + X(minDia(p.hora))) / 2).toFixed(1)}" y="${m.t + h - 6}" font-size="${F}" font-style="italic" fill="#5b6778" text-anchor="middle">sem medições</text>`;
-      }
+      const ant = segmentos[i - 1][segmentos[i - 1].length - 1], prox = sg[0];
+      if (ant && prox && X(prox.minuto) - X(ant.minuto) > 70)
+        s += `<text x="${((X(ant.minuto) + X(prox.minuto)) / 2).toFixed(1)}" y="${m.t + h - 8}" font-size="${F}" font-style="italic" fill="#9aa5b1" text-anchor="middle">sem medições</text>`;
     }
-    seg.push(p);
+    if (!sg.length) return;
+    const P = sg.map(p => [X(p.minuto), Y(p.umidade)]);
+    if (P.length === 1) { s += `<circle cx="${P[0][0].toFixed(1)}" cy="${P[0][1].toFixed(1)}" r="3" fill="#0b86d1"/>`; return; }
+    const d = caminhoSuave(P);
+    s += `<path d="${d} L${P[P.length - 1][0].toFixed(1)},${Y(0)} L${P[0][0].toFixed(1)},${Y(0)} Z" fill="url(#gradUmidade)" clip-path="url(#recorteGrafico)"/>`;
+    s += `<path class="linha-umidade" fill="none" stroke="#0b86d1" stroke-width="${compacto ? 3 : 2.4}" stroke-linecap="round" stroke-linejoin="round" d="${d}" clip-path="url(#recorteGrafico)"/>`;
   });
-  linhas.push(seg);
-  /* Curva suave ("minhoca"): spline cúbica monótona (Fritsch–Carlson). Passa EXATAMENTE por cada medição e nunca
-     ultrapassa o valor de dois pontos vizinhos (sem picos inventados). Lacunas continuam sem ligação. */
-  linhas.forEach(sg => {
-    if (sg.length < 2) return;
-    const P = sg.map(p => [X(minDia(p.hora)), Y(p.umidade)]);
-    s += `<polyline class="linha-base" fill="none" stroke="none" points="${P.map(q => `${q[0].toFixed(1)},${q[1].toFixed(1)}`).join(' ')}"/>`;
-    s += `<path class="linha-umidade" fill="none" stroke="#0b86d1" stroke-width="${compacto ? 3.4 : 2.6}" stroke-linecap="round" stroke-linejoin="round" d="${caminhoSuave(P)}"/>`;
+  // marcas de início da irrigação sobre a curva (só quando são poucas, para não poluir)
+  if (faixas.length <= 24) faixas.forEach(f => {
+    const p = pts.reduce((a, b) => Math.abs(X(b.minuto) - f.x1) < Math.abs(X(a.minuto) - f.x1) ? b : a);
+    s += `<circle cx="${X(p.minuto).toFixed(1)}" cy="${Y(p.umidade).toFixed(1)}" r="${compacto ? 5 : 4}" fill="#16a34a" stroke="#fff" stroke-width="2"/>`;
   });
+  s += textosLimite;
+  // última medição em destaque (no dia de hoje, com um halo indicando "agora")
+  const ult = pts[pts.length - 1];
+  if (ehHoje) s += `<circle cx="${X(ult.minuto).toFixed(1)}" cy="${Y(ult.umidade).toFixed(1)}" r="10" fill="#0b86d1" opacity=".15"/>`;
+  s += `<circle cx="${X(ult.minuto).toFixed(1)}" cy="${Y(ult.umidade).toFixed(1)}" r="${compacto ? 5.5 : 4.5}" fill="#0b86d1" stroke="#fff" stroke-width="2"/>`;
 
   const itens = pts.map(p => {
-    const x = X(minDia(p.hora)), y = Y(p.umidade);
+    const x = X(p.minuto), y = Y(p.umidade);
     const ligada = eventos.some(e => e.ini <= p.hora && (!e.fim || e.fim > p.hora));
-    const sel = selecionada && selecionada === p.hora;
-    if (sel) s += `<circle class="ponto-selecionado" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${compacto ? 10 : 8}" fill="none" stroke="#14213d" stroke-width="2"/>`;
-    s += `<circle class="ponto ${ligada ? 'irrig-ligada' : 'irrig-desligada'}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${compacto ? 5 : 3.5}" fill="${ligada ? '#15803d' : '#e0141e'}"/>`;
+    if (selecionada && selecionada === p.hora) s += `<circle class="ponto-selecionado" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${compacto ? 10 : 8}" fill="none" stroke="#14213d" stroke-width="2"/>`;
     const estado = Analise.estadoSolo(p.umidade, liga, desliga);
-    return {
-      hora: p.hora, umidade: p.umidade,
-      x, y, guiaDe: m.t, guiaAte: m.t + h,
-      titulo: `${Tempo.dataBR(p.dia)} · ${Tempo.horaDe(p.hora)}`,
-      linhas: [`Umidade: ${formatarNumero(p.umidade, 1)}%`,
-               ...(estado ? [`Solo: ${estado.rotulo.replace('Solo ', '')}`] : []),
-               p.temperatura != null ? `Temperatura: ${formatarNumero(p.temperatura, 1)} °C` : 'Temperatura: sem leitura',
-               `Irrigação: ${ligada ? 'ligada' : 'desligada'}`]
-    };
+    const linhas = [`Umidade: ${formatarNumero(p.umidade, 1)}%`];
+    if (p.n > 1) linhas.push(`Média de ${p.n} leituras (${formatarNumero(p.min, 0, 1)}% a ${formatarNumero(p.max, 0, 1)}%)`);
+    if (estado) linhas.push(`Solo: ${estado.rotulo.replace('Solo ', '')}`);
+    linhas.push(`Irrigação: ${ligada ? 'ligada' : 'desligada'}`);
+    return { hora: p.hora, umidade: p.umidade, x, y, guiaDe: m.t, guiaAte: m.t + h, titulo: `${Tempo.dataBR(p.dia)} · ${Tempo.horaDe(p.hora)}`, linhas };
   });
+  const wrap = document.createElement('div'); wrap.className = 'grafico-wrap';
   wrap.innerHTML = `<svg viewBox="0 0 ${L} ${A}" role="img" aria-label="Umidade do solo em ${Tempo.dataBR(dia)}">${s}</svg>`;
   el.appendChild(wrap);
   conferirLargura(el, wrap, L, el._redesenhar);
   if (el._largura && el._largura !== L) return;                                 // foi redesenhado com a largura certa
-  ligarInteracao(wrap, wrap.querySelector('svg'), itens, { largura: L, altura: A, rotulo: `Gráfico de umidade do solo em ${Tempo.dataBR(dia)}, ${pts.length} leituras`, inicial: selecionada ? pts.findIndex(p => p.hora === selecionada) : -1,
+  ligarInteracao(wrap, wrap.querySelector('svg'), itens, { largura: L, altura: A, rotulo: `Gráfico de umidade do solo em ${Tempo.dataBR(dia)}, ${brutos.length} leituras`, inicial: selecionada ? pts.findIndex(p => p.hora === selecionada) : -1,
     aoClicar: aoSelecionar ? it => aoSelecionar({ hora: it.hora, umidade: it.umidade }) : null });
   if (aoSelecionar) wrap.classList.add('clicavel');
 }

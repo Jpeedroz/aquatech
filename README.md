@@ -30,6 +30,17 @@ Sensores → ESP32 → Wi-Fi → API → PostgreSQL → Dashboard
 * Liga a bomba: umidade abaixo de 18%.
 * Desliga a bomba: umidade a partir de 30%.
 * Estado do solo: crítico (< 12%), seco (< 18%), adequado (< 30%), úmido (≥ 30%).
+* Chuva prevista: com chuva acontecendo ou prevista para as próximas 3 horas, o ESP32 adia a irrigação, a não ser que a umidade caia abaixo de 8%.
+
+## Clima da região
+
+O back-end consulta a API pública [Open-Meteo](https://open-meteo.com) (gratuita, sem chave) e guarda a resposta por 10 minutos:
+
+* **Dashboard:** cartão com a temperatura atual da cidade e a situação de chuva (`GET /api/clima`).
+* **ESP32:** a rota `GET /api/dispositivos/<codigo>/configuracao` devolve `chuva_prevista` e `umidade_critica`.
+* Considera "chuva prevista" quando há 0,1 mm ou mais de chuva agora, ou 1 mm ou mais somados nas próximas 3 horas.
+* É **previsão meteorológica da cidade**, não leitura de sensor da propriedade. Sem internet, o cartão mostra "indisponível" e a irrigação segue normal pela umidade do solo.
+* A cidade é configurada no `.env`: `CLIMA_LOCAL`, `CLIMA_LATITUDE` e `CLIMA_LONGITUDE` (padrão: Juazeiro do Norte - CE).
 
 ## Execução:
 

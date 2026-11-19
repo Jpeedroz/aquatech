@@ -9,6 +9,7 @@ from decimal import Decimal
 
 from tests import auxiliar                      # noqa: F401  (ajusta o caminho de importação)
 
+import clima
 import config
 import regras
 import seguranca
@@ -148,3 +149,58 @@ class TestJson(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TestClima(unittest.TestCase):
+    CFG = {'CLIMA_ATIVO': True, 'CLIMA_LOCAL': 'Juazeiro do Norte - CE', 'CLIMA_LATITUDE': -7.2131,
+           'CLIMA_LONGITUDE': -39.3153, 'CLIMA_CHUVA_AGORA_MM': 0.1, 'CLIMA_CHUVA_PREVISTA_MM': 1.0}
+
+    def resposta(self, agora=0.0, horas=(0.0, 0.0, 0.0), prob=(10, 20, 30)):
+        # formato real do Open-Meteo: "current_units" também tem a chave temperature_2m (com o texto "°C")
+        return {'current_units': {'temperature_2m': '°C', 'precipitation': 'mm'},
+                'current': {'time': '2026-11-19T14:00', 'temperature_2m': 31.46, 'precipitation': agora},
+                'hourly': {'precipitation': list(horas), 'precipitation_probability': list(prob)}}
+
+    def setUp(self):
+        clima.limpar_cache()
+
+    def test_sem_chuva(self):
+        r = clima.interpretar(self.resposta(), self.CFG)
+        self.assertEqual(r['temperatura'], 31.5)
+        self.assertIs(r['chuva_prevista'], False)
+        self.assertEqual(r['situacao'], 'Sem chuva prevista')
+        self.assertEqual(r['probabilidade_chuva'], 30)
+
+    def test_chovendo_agora(self):
+        r = clima.interpretar(self.resposta(agora=0.4), self.CFG)
+        self.assertIs(r['chovendo'], True)
+        self.assertIs(r['chuva_prevista'], True)
+
+    def test_chuva_prevista_pela_soma_das_proximas_horas(self):
+        self.assertIs(clima.interpretar(self.resposta(horas=(0.2, 0.5, 0.4)), self.CFG)['chuva_prevista'], True)
+        self.assertIs(clima.interpretar(self.resposta(horas=(0.2, 0.3, 0.1)), self.CFG)['chuva_prevista'], False)
+
+    def test_falha_vira_indisponivel_e_fica_em_cache(self):
+        chamadas = []
+
+        def falhar(lat, lon):
+            chamadas.append(1)
+            raise OSError('sem internet')
+        r = clima.clima_atual(self.CFG, buscar=falhar)
+        self.assertIs(r['disponivel'], False)
+        self.assertIs(r['chuva_prevista'], False)                       # sem previsão: irriga normal
+        clima.clima_atual(self.CFG, buscar=falhar)
+        self.assertEqual(len(chamadas), 1)                               # a falha não é repetida a cada requisição
+
+    def test_resposta_boa_fica_em_cache(self):
+        chamadas = []
+
+        def buscar(lat, lon):
+            chamadas.append((lat, lon))
+            return self.resposta()
+        clima.clima_atual(self.CFG, buscar=buscar)
+        clima.clima_atual(self.CFG, buscar=buscar)
+        self.assertEqual(chamadas, [(-7.2131, -39.3153)])
+
+    def test_desativado(self):
+        self.assertIs(clima.clima_atual({**self.CFG, 'CLIMA_ATIVO': False})['disponivel'], False)
