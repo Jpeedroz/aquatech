@@ -55,7 +55,7 @@ const unsigned long VALIDADE_PREVISAO = 600000;   // sem falar com o servidor ha
 
 // Intervalos (milissegundos)
 const unsigned long INTERVALO_LEITURA = 1000;   // le sensores e decide sobre a bomba
-const unsigned long INTERVALO_ENVIO   = 10000;  // envia leituras para a API
+const unsigned long INTERVALO_ENVIO   = 5000;   // envia leituras para a API
 const unsigned long INTERVALO_CONFIG  = 60000;  // busca os limites na API
 const unsigned long INTERVALO_WIFI    = 15000;  // tenta reconectar o Wi-Fi
 

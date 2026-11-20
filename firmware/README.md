@@ -148,7 +148,7 @@ Para recalibrar, reinicie o ESP32, passe um volume conhecido pela bomba e ajuste
 
 | Quando | Rota |
 |---|---|
-| A cada 10 s | `POST /api/dispositivos/<codigo>/leituras` com `umidade_solo` e `vazao_agua` |
+| A cada 5 s | `POST /api/dispositivos/<codigo>/leituras` com `umidade_solo` e `vazao_agua` |
 | Ao ligar e a cada 60 s | `GET /api/dispositivos/<codigo>/configuracao` (limites e `chuva_prevista`) |
 | Quando a bomba liga ou desliga | `PUT /api/dispositivos/<codigo>/irrigacao`, com os litros medidos na irrigação |
 
