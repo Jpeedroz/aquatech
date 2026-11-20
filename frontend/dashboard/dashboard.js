@@ -24,12 +24,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     aoMudar: ({ periodo }) => carregarDoPeriodo(periodo),
     aoErro: e => Estado.erro($('grafico'), e.message, () => window.location.reload())
   });
-  // Atualização automática a cada 15 s (o ESP32 envia leituras a cada 10 s). Aba em segundo plano não consulta.
+  // Atualização automática a cada 5 s (o ESP32 envia leituras a cada 5 s). Aba em segundo plano não consulta.
   setInterval(async () => {
     if (document.hidden || !periodoAtual) return;
     const ok = await atualizarResumo();
     if (ok && periodoAtual.tipo === 'hoje') carregarDoPeriodo(periodoAtual, true, true);
-  }, 15000);
+  }, 5000);
 });
 
 async function atualizarResumo() {
@@ -53,7 +53,11 @@ function renderizarAtual() {
   $('irrigStatus').textContent = resumo.dispositivo_id == null ? 'Sem dispositivo' : ligada ? 'Ligada' : 'Desligada';
   $('irrigNota').textContent = resumo.dispositivo_id == null ? 'Cadastre um dispositivo'
     : ligada ? 'Irrigação em andamento' : resumo.online === false ? 'Sem medições recentes' : 'Irrigação não necessária';
+  // Se a propriedade tem sensor de temperatura com leitura, ela tem prioridade sobre a previsão do tempo
+  if (temSensorTemperatura()) $('temperatura').textContent = `${formatarNumero(resumo.temperatura_atual, 0, 1)} °C`;
 }
+
+function temSensorTemperatura() { return resumo != null && resumo.temperatura_atual != null; }
 
 /* Cartão "Clima": temperatura e previsão de chuva da cidade (API Open-Meteo, via back-end).
    É previsão meteorológica, não sensor da maquete: o cartão mostra a fonte. Com chuva prevista o ESP32 adia a irrigação. */
@@ -61,13 +65,14 @@ async function atualizarClima() {
   let c;
   try { c = await getClima(); } catch (e) { c = null; }
   const chip = $('climaChuva');
+  const sensor = temSensorTemperatura();
   if (!c || !c.disponivel) {
-    $('temperatura').textContent = '—';
+    if (!sensor) $('temperatura').textContent = '—';
     $('climaNota').textContent = c ? c.situacao : 'Previsão do tempo indisponível no momento';
     chip.hidden = true; return;
   }
   $('climaRotulo').textContent = `Clima em ${c.local}`;
-  $('temperatura').textContent = c.temperatura == null ? '—' : `${formatarNumero(c.temperatura, 0, 1)} °C`;
+  if (!sensor) $('temperatura').textContent = c.temperatura == null ? '—' : `${formatarNumero(c.temperatura, 0, 1)} °C`;
   chip.hidden = false;
   chip.className = 'chip-chuva ' + (c.chuva_prevista ? 'chuva' : 'seco');
   chip.textContent = c.chovendo ? 'Chovendo' : c.chuva_prevista ? 'Chuva prevista' : 'Sem chuva';

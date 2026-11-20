@@ -128,6 +128,11 @@ function graficoUmidade(el, { dia, grupos, eventos, liga, desliga, aoSelecionar,
   const brutos = grupos.filter(g => g.umidade != null && g.dia === dia);       // TODAS as medições do dia, nos horários reais
   el.innerHTML = '';
   if (!brutos.length) { Estado.vazio(el, 'Sem leituras de umidade neste dia.', 'Escolha outro dia ou período.'); return; }
+  /* Medições espaçadas (uma por hora, como no modo demonstração): gráfico de 06h a 18h com um ponto por medição.
+     Medições densas (o ESP32 envia a cada poucos segundos): curva contínua com o eixo ajustado aos dados. */
+  const intervalos = brutos.slice(1).map((p, i) => Tempo.minutosTs(p.hora) - Tempo.minutosTs(brutos[i].hora)).sort((a, b) => a - b);
+  if (brutos.length < 3 || (intervalos[Math.floor(intervalos.length / 2)] || 60) >= 20)
+    return graficoUmidadeEsparso(el, { dia, grupos, eventos, liga, desliga, aoSelecionar, selecionada });
   const { compacto, L, baixo } = medidaGrafico(el);
   const A = baixo ? 240 : compacto ? 300 : 330, m = compacto ? { e: 40, d: 14, t: 18, b: 36 } : { e: 46, d: 20, t: 22, b: 34 };
   const F = compacto ? 12.5 : 10.5;
@@ -253,6 +258,102 @@ function graficoUmidade(el, { dia, grupos, eventos, liga, desliga, aoSelecionar,
   conferirLargura(el, wrap, L, el._redesenhar);
   if (el._largura && el._largura !== L) return;                                 // foi redesenhado com a largura certa
   ligarInteracao(wrap, wrap.querySelector('svg'), itens, { largura: L, altura: A, rotulo: `Gráfico de umidade do solo em ${Tempo.dataBR(dia)}, ${brutos.length} leituras`, inicial: selecionada ? pts.findIndex(p => p.hora === selecionada) : -1,
+    aoClicar: aoSelecionar ? it => aoSelecionar({ hora: it.hora, umidade: it.umidade }) : null });
+  if (aoSelecionar) wrap.classList.add('clicavel');
+}
+function graficoUmidadeEsparso(el, { dia, grupos, eventos, liga, desliga, aoSelecionar, selecionada }) {
+  const pts = grupos.filter(g => g.umidade != null && g.dia === dia);          // TODAS as medições do dia, nos horários reais
+  el.innerHTML = '';
+  if (!pts.length) { Estado.vazio(el, 'Sem leituras de umidade neste dia.', 'Escolha outro dia ou período.'); return; }
+  const { compacto, L, baixo } = medidaGrafico(el);
+  const A = baixo ? 230 : compacto ? 300 : 310, m = compacto ? { e: 44, d: 12, t: 14, b: 40 } : { e: 50, d: 18, t: 16, b: 36 };
+  const F = compacto ? 12.5 : 10;                                                // tamanho das letras do gráfico
+  redesenharAoGirar(el, () => graficoUmidadeEsparso(el, { dia, grupos, eventos, liga, desliga, aoSelecionar, selecionada }));
+  const w = L - m.e - m.d, h = A - m.t - m.b;
+  const minDia = ts => T_minDia(ts);
+  const vmax = Math.max(40, Math.ceil(Math.max(...pts.map(p => p.umidade), desliga || 0) / 10) * 10);
+  // escala padrão 06h–18h (medições horárias); se houver medição fora dessa faixa, a escala se amplia — nenhuma medição é escondida
+  const minimo = Math.min(...pts.map(p => T_minDia(p.hora))), maximo = Math.max(...pts.map(p => T_minDia(p.hora)));
+  const MIN0 = Math.min(6 * 60, Math.floor(minimo / 60) * 60), MIN1 = Math.max(18 * 60, Math.ceil(maximo / 60) * 60);
+  const PAD = compacto ? 14 : 22;                                     // folga lateral: o ponto das 06h/18h não encosta no eixo
+  const X = min => m.e + PAD + ((Math.min(MIN1, Math.max(MIN0, min)) - MIN0) / (MIN1 - MIN0)) * (w - 2 * PAD);
+  const Y = v => m.t + h - (v / vmax) * h;
+  const agora = Tempo.agora();
+  const fimLinha = pts[pts.length - 1].hora;
+
+  const wrap = document.createElement('div'); wrap.className = 'grafico-wrap';
+  let s = '';
+  for (let v = 0; v <= vmax; v += 10) {
+    s += `<line x1="${m.e}" x2="${L - m.d}" y1="${Y(v)}" y2="${Y(v)}" stroke="#e8edf2"/>
+          <text x="${m.e - 8}" y="${Y(v) + 3}" font-size="${F}" fill="#5b6778" text-anchor="end">${v}%</text>`;
+  }
+  const H0 = MIN0 / 60, H1 = MIN1 / 60;
+  const porHora = (w - 2 * PAD) / (H1 - H0), passoH = [1, 2, 3, 4, 6, 12].find(k => porHora * k >= (compacto ? 50 : 0)) || 12;
+  for (let hh = H0; hh <= H1; hh++) {                 // linhas de grade em todas as horas; RÓTULOS só de tempos em tempos (2h; no celular, o que couber)
+    s += `<line x1="${X(hh * 60)}" x2="${X(hh * 60)}" y1="${m.t}" y2="${m.t + h}" stroke="#f1f4f7"/>`;
+    if ((hh - H0) % (compacto ? passoH : 2) === 0) s += `<text class="rotulo-hora" x="${X(hh * 60)}" y="${A - 14}" font-size="${F}" fill="#5b6778" text-anchor="middle">${Tempo.dois(hh)}${compacto ? 'h' : ':00'}</text>`;
+  }
+  // faixa de irrigação (evento aberto vai até a última leitura/agora)
+  eventos.forEach(e => {
+    const ini = e.ini.slice(0, 10) < dia ? 0 : minDia(e.ini);
+    let fim = e.fim ? (e.fim.slice(0, 10) > dia ? 1440 : minDia(e.fim)) : minDia(dia === agora.slice(0, 10) ? agora : fimLinha);
+    if (e.ini.slice(0, 10) > dia || (e.fim && e.fim.slice(0, 10) < dia)) return;
+    if (Math.min(fim, MIN1) > Math.max(ini, MIN0)) s += `<rect class="faixa-irrig" x="${X(ini)}" y="${m.t}" width="${Math.max(2, X(fim) - X(ini))}" height="${h}" fill="#c9f2c7" opacity=".85"/>`;
+  });
+  if (desliga != null) s += `<line x1="${m.e}" x2="${L - m.d}" y1="${Y(desliga)}" y2="${Y(desliga)}" stroke="#1c8a4a" stroke-dasharray="5 4"/>
+    <text x="${L - m.d - 4}" y="${Y(desliga) - 5}" font-size="${F}" font-weight="600" fill="#1c6b3a" text-anchor="end">${compacto ? 'Desliga' : 'Desliga irrigação —'} ${formatarNumero(desliga)}%</text>`;
+  if (liga != null) s += `<line x1="${m.e}" x2="${L - m.d}" y1="${Y(liga)}" y2="${Y(liga)}" stroke="#9aa5b3" stroke-dasharray="5 4"/>
+    <text x="${L - m.d - 4}" y="${Y(liga) + F + 3}" font-size="${F}" font-weight="600" fill="#c4570c" text-anchor="end">${compacto ? 'Liga' : 'Liga irrigação —'} ${formatarNumero(liga)}%</text>`;
+
+  // a linha NÃO atravessa lacunas: se faltar uma medição (intervalo > 1,5× o intervalo típico entre medições), os pontos ficam separados
+  // e a lacuna recebe a legenda "sem medições". Nada é inventado entre dois pontos distantes.
+  const difs = pts.slice(1).map((p, i) => Tempo.minutosTs(p.hora) - Tempo.minutosTs(pts[i].hora)).sort((a, b) => a - b);
+  const tipico = difs.length ? difs[Math.floor(difs.length / 2)] : 60;
+  const limiteLacuna = Math.max(tipico * 1.5, 45);
+  let seg = [];
+  const linhas = [];
+  pts.forEach((p, i) => {
+    if (i) {
+      const ant = pts[i - 1], dif = Tempo.minutosTs(p.hora) - Tempo.minutosTs(ant.hora);
+      if (dif > limiteLacuna) {
+        linhas.push(seg); seg = [];
+        if (dif >= 120) s += `<text class="legenda-lacuna" x="${((X(minDia(ant.hora)) + X(minDia(p.hora))) / 2).toFixed(1)}" y="${m.t + h - 6}" font-size="${F}" font-style="italic" fill="#5b6778" text-anchor="middle">sem medições</text>`;
+      }
+    }
+    seg.push(p);
+  });
+  linhas.push(seg);
+  /* Curva suave ("minhoca"): spline cúbica monótona (Fritsch–Carlson). Passa EXATAMENTE por cada medição e nunca
+     ultrapassa o valor de dois pontos vizinhos (sem picos inventados). Lacunas continuam sem ligação. */
+  linhas.forEach(sg => {
+    if (sg.length < 2) return;
+    const P = sg.map(p => [X(minDia(p.hora)), Y(p.umidade)]);
+    s += `<polyline class="linha-base" fill="none" stroke="none" points="${P.map(q => `${q[0].toFixed(1)},${q[1].toFixed(1)}`).join(' ')}"/>`;
+    s += `<path class="linha-umidade" fill="none" stroke="#0b86d1" stroke-width="${compacto ? 3.4 : 2.6}" stroke-linecap="round" stroke-linejoin="round" d="${caminhoSuave(P)}"/>`;
+  });
+
+  const itens = pts.map(p => {
+    const x = X(minDia(p.hora)), y = Y(p.umidade);
+    const ligada = eventos.some(e => e.ini <= p.hora && (!e.fim || e.fim > p.hora));
+    const sel = selecionada && selecionada === p.hora;
+    if (sel) s += `<circle class="ponto-selecionado" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${compacto ? 10 : 8}" fill="none" stroke="#14213d" stroke-width="2"/>`;
+    s += `<circle class="ponto ${ligada ? 'irrig-ligada' : 'irrig-desligada'}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${compacto ? 5 : 3.5}" fill="${ligada ? '#15803d' : '#e0141e'}"/>`;
+    const estado = Analise.estadoSolo(p.umidade, liga, desliga);
+    return {
+      hora: p.hora, umidade: p.umidade,
+      x, y, guiaDe: m.t, guiaAte: m.t + h,
+      titulo: `${Tempo.dataBR(p.dia)} · ${Tempo.horaDe(p.hora)}`,
+      linhas: [`Umidade: ${formatarNumero(p.umidade, 1)}%`,
+               ...(estado ? [`Solo: ${estado.rotulo.replace('Solo ', '')}`] : []),
+               p.temperatura != null ? `Temperatura: ${formatarNumero(p.temperatura, 1)} °C` : 'Temperatura: sem leitura',
+               `Irrigação: ${ligada ? 'ligada' : 'desligada'}`]
+    };
+  });
+  wrap.innerHTML = `<svg viewBox="0 0 ${L} ${A}" role="img" aria-label="Umidade do solo em ${Tempo.dataBR(dia)}">${s}</svg>`;
+  el.appendChild(wrap);
+  conferirLargura(el, wrap, L, el._redesenhar);
+  if (el._largura && el._largura !== L) return;                                 // foi redesenhado com a largura certa
+  ligarInteracao(wrap, wrap.querySelector('svg'), itens, { largura: L, altura: A, rotulo: `Gráfico de umidade do solo em ${Tempo.dataBR(dia)}, ${pts.length} leituras`, inicial: selecionada ? pts.findIndex(p => p.hora === selecionada) : -1,
     aoClicar: aoSelecionar ? it => aoSelecionar({ hora: it.hora, umidade: it.umidade }) : null });
   if (aoSelecionar) wrap.classList.add('clicavel');
 }

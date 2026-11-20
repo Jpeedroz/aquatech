@@ -124,6 +124,14 @@ docker compose down
 
 Esse comando para e remove os contêineres e a rede do projeto, sem solicitar a exclusão do volume do banco de dados.
 
+## Testes e dados de demonstração
+
+* **Usuário de demonstração:** `usuario@exemplo.com`, senha `123456`. É criado pelo script `backend/scripts/criar_usuario_demo.py` (no Docker: `docker compose exec app python scripts/criar_usuario_demo.py`).
+* **Banco de dados:** criado pelo script `backend/scripts/init_db.py` a partir de `database/aquatech_database.sql`. O projeto não usa Migrations: mudanças no esquema vão direto no script SQL. Os dados ficam persistidos no volume do PostgreSQL.
+* **Modo demonstração:** `?modo=demo` mostra dados de exemplo sem servidor. Para alterar essas medições, edite `MOCK_AJUSTES` em `frontend/shared/js/mockData.js`. `?modo=api` usa o servidor e o banco reais.
+* **Testes do servidor:** dentro de `backend`, rode `python -m unittest discover -s tests -t .` (os testes com PostgreSQL rodam com `DB_NAME` terminando em `_teste`).
+* **Testes das telas:** na raiz, rode `node --test frontend/tests/*.test.js`.
+
 ## Observações
 
 - O arquivo `.env` deve ficar na raiz do projeto.
