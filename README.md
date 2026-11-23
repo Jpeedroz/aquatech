@@ -12,12 +12,17 @@ O sistema recebe dados dos sensores, envia as informações para a API e armazen
 Sensores → ESP32 → Wi-Fi → API → PostgreSQL → Dashboard
 ```
 
+## Hardware (ESP32)
+
+O código do ESP32, a lista de materiais, a pinagem, o esquema de ligação e o passo a passo de montagem e calibração estão em [`firmware/`](firmware/README.md).
+
 ## Tecnologias
 
 * Python (Flask)
 * PostgreSQL
 * Docker Compose
 * HTML, CSS e JavaScript
+* ESP32 (C++ na Arduino IDE)
 
 ## Requisitos
 
