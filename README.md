@@ -30,6 +30,18 @@ Sensores → ESP32 → Wi-Fi → API → PostgreSQL → Dashboard
 * Liga a bomba: umidade abaixo de 18%.
 * Desliga a bomba: umidade a partir de 30%.
 * Estado do solo: crítico (< 12%), seco (< 18%), adequado (< 30%), úmido (≥ 30%).
+* Chuva prevista: com chuva acontecendo ou prevista para as próximas 3 horas, o ESP32 adia a irrigação, a não ser que a umidade caia abaixo de 8%.
+
+## Clima da região
+
+O back-end consulta a API pública [Open-Meteo](https://open-meteo.com) (gratuita, sem chave) e guarda a resposta por 10 minutos:
+
+* **Dashboard:** cartão com a temperatura atual da cidade e a situação de chuva (`GET /api/clima`).
+* **ESP32:** a rota `GET /api/dispositivos/<codigo>/configuracao` devolve `chuva_prevista` e `umidade_critica`.
+* Considera "chuva prevista" quando há 0,1 mm ou mais de chuva agora, ou 1 mm ou mais somados nas próximas 3 horas.
+* É **previsão meteorológica da cidade**, não leitura de sensor da propriedade. Sem internet, o cartão mostra "indisponível" e a irrigação segue normal pela umidade do solo.
+* **Demonstração:** com `CLIMA_SIMULAR_CHUVA=true` a chuva é forçada (o dashboard mostra "Chuva simulada" e o ESP32 adia a irrigação). No PowerShell: `$env:CLIMA_SIMULAR_CHUVA="true"; docker compose up -d`. Para voltar: `$env:CLIMA_SIMULAR_CHUVA="false"; docker compose up -d`.
+* A cidade é configurada no `.env`: `CLIMA_LOCAL`, `CLIMA_LATITUDE` e `CLIMA_LONGITUDE` (padrão: Juazeiro do Norte - CE).
 
 ## Execução:
 
@@ -111,6 +123,14 @@ docker compose down
 ```
 
 Esse comando para e remove os contêineres e a rede do projeto, sem solicitar a exclusão do volume do banco de dados.
+
+## Testes e dados de demonstração
+
+* **Usuário de demonstração:** `usuario@exemplo.com`, senha `123456`. É criado pelo script `backend/scripts/criar_usuario_demo.py` (no Docker: `docker compose exec app python scripts/criar_usuario_demo.py`).
+* **Banco de dados:** criado pelo script `backend/scripts/init_db.py` a partir de `database/aquatech_database.sql`. O projeto não usa Migrations: mudanças no esquema vão direto no script SQL. Os dados ficam persistidos no volume do PostgreSQL.
+* **Modo demonstração:** `?modo=demo` mostra dados de exemplo sem servidor. Para alterar essas medições, edite `MOCK_AJUSTES` em `frontend/shared/js/mockData.js`. `?modo=api` usa o servidor e o banco reais.
+* **Testes do servidor:** dentro de `backend`, rode `python -m unittest discover -s tests -t .` (os testes com PostgreSQL rodam com `DB_NAME` terminando em `_teste`).
+* **Testes das telas:** na raiz, rode `node --test frontend/tests/*.test.js`.
 
 ## Observações
 

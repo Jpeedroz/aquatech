@@ -7,6 +7,7 @@ ROTAS:  GET /api/dashboard                          situação atual + leituras 
         GET /api/consumo?inicio=&fim=               consumo de água por dia (view consumo_diario)
         GET /api/consumo/resumo                     hoje, 7 dias, 30 dias e total
         GET /api/dias-disponiveis?fonte=            dias que têm dados (leituras | eventos | consumo): alimenta os calendários
+        GET /api/clima                              temperatura e previsão de chuva da região (API Open-Meteo)
 TELAS:  Dashboard, Histórico, Irrigações, Consumo de água.
 Sem dados, as rotas devolvem listas vazias / valores nulos (a tela mostra "Nenhuma medição registrada ..."):
 nada é inventado e nada do futuro é devolvido (hora_leitura / iniciado_em <= agora, no fuso da propriedade).
@@ -14,6 +15,7 @@ nada é inventado e nada do futuro é devolvido (hora_leitura / iniciado_em <= a
 from flask import Blueprint, current_app, g, jsonify, request
 
 import banco
+import clima
 import validacoes as v
 from erros import ErroApi
 from seguranca import login_obrigatorio
@@ -164,3 +166,11 @@ def dias_disponiveis():
     sql, extra = _FONTES_DIAS[fonte]
     linhas = banco.consultar(sql, (g.usuario['id'], list(extra) if isinstance(extra, tuple) else extra, MAX_DIAS_DISPONIVEIS))
     return jsonify({'dias': sorted(l['dia'] for l in linhas)})
+
+
+@bp.get('/clima')
+@login_obrigatorio
+def clima_regiao():
+    """Temperatura atual e previsão de chuva da cidade configurada (CLIMA_LOCAL). É previsão
+    meteorológica, não leitura de sensor: a tela mostra a fonte. Sem internet: disponivel=false."""
+    return jsonify(clima.clima_atual(current_app.config))

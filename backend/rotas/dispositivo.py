@@ -3,7 +3,7 @@ NOME: rotas/dispositivo.py
 FUNÇÃO: Rotas usadas pelo ESP32 (não pelo navegador). Cada ESP32 se identifica pelo código
         na URL e prova quem é com a chave no cabeçalho X-Chave-Dispositivo (veja seguranca.py).
 ROTAS:  POST /api/dispositivos/<codigo>/leituras       envia umidade, temperatura e/ou vazão
-        GET  /api/dispositivos/<codigo>/configuracao   limites de umidade e modo de irrigação
+        GET  /api/dispositivos/<codigo>/configuracao   limites de umidade, modo de irrigação e previsão de chuva
         PUT  /api/dispositivos/<codigo>/irrigacao      informa que a irrigação ligou ou desligou
 IMPORTANTE: o backend NÃO liga a bomba. Quem decide e aciona o relé é o ESP32; ele apenas
             REGISTRA aqui o que fez. Os horários de início/fim são os do servidor.
@@ -13,6 +13,7 @@ from datetime import timedelta
 from flask import Blueprint, current_app, g, jsonify
 
 import banco
+import clima
 import validacoes as v
 from erros import ErroApi
 from regras import volume_por_vazao
@@ -74,16 +75,22 @@ def registrar_leituras(codigo):
 @bp.get('/dispositivos/<codigo>/configuracao')
 @dispositivo_obrigatorio
 def configuracao(codigo):
-    """O ESP32 consulta aqui quando liga (e de tempos em tempos) as regras da propriedade."""
+    """O ESP32 consulta aqui quando liga (e de tempos em tempos) as regras da propriedade.
+    Inclui a previsão de chuva da região: com chuva_prevista=true o ESP32 adia a irrigação,
+    exceto se a umidade estiver abaixo de umidade_critica."""
     propriedade = banco.consultar(
         'SELECT metodo_irrigacao, limite_umidade, limite_umidade_desliga '
         'FROM propriedades WHERE id = %s', (g.dispositivo['propriedade_id'],), um=True)
+    tempo = clima.clima_atual(current_app.config)
     return jsonify({
         'codigo_dispositivo': g.dispositivo['codigo_dispositivo'],
         'metodo_irrigacao': propriedade['metodo_irrigacao'],
         'limite_umidade': propriedade['limite_umidade'],                  # abaixo disto a irrigação LIGA
         'limite_umidade_desliga': propriedade['limite_umidade_desliga'],  # ao chegar aqui ela DESLIGA
         'irrigacao_ligada': g.dispositivo['irrigacao_ligada'],            # o que o servidor tem registrado
+        'chuva_prevista': tempo['chuva_prevista'],                        # sem previsão disponível: false
+        'umidade_critica': current_app.config['UMIDADE_CRITICA'],         # abaixo disto irriga mesmo com chuva
+        'clima_disponivel': tempo['disponivel'],
     })
 
 

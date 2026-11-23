@@ -481,6 +481,17 @@ class TestDispositivo(Base):
                                                           'limite_umidade_desliga': Decimal('30.00')}])
         r = self.cliente.get('/api/dispositivos/ESP32-001/configuracao', headers=self.chave())
         self.assertEqual(self.json(r)['limite_umidade_desliga'], 30.0)
+        self.assertIs(self.json(r)['chuva_prevista'], False)             # clima desligado nos testes: irriga normal
+        self.assertEqual(self.json(r)['umidade_critica'], 8)
+
+    def test_configuracao_com_chuva_prevista(self):
+        self.banco.quando('FROM propriedades WHERE id', [{'metodo_irrigacao': 'Gravidade', 'limite_umidade': Decimal('18.00'),
+                                                          'limite_umidade_desliga': Decimal('30.00')}])
+        previsao = {'chuva_prevista': True, 'disponivel': True}
+        with mock.patch('clima.clima_atual', return_value=previsao):
+            c = self.json(self.cliente.get('/api/dispositivos/ESP32-001/configuracao', headers=self.chave()))
+        self.assertIs(c['chuva_prevista'], True)
+        self.assertIs(c['clima_disponivel'], True)
 
     def irrigacao(self, corpo):
         return self.cliente.put('/api/dispositivos/ESP32-001/irrigacao', json=corpo, headers=self.chave())
@@ -542,6 +553,18 @@ class TestDispositivo(Base):
         self.banco.quando('UPDATE dispositivos SET irrigacao_ligada = FALSE', 1)
         r = self.irrigacao({'ligada': False})
         self.assertEqual((r.status_code, self.json(r)['evento']), (200, None))
+
+
+class TestClimaRota(Base):
+    def test_clima_exige_login(self):
+        self.assertEqual(self.cliente.get('/api/clima').status_code, 401)
+
+    def test_clima_sem_internet_nao_quebra_a_tela(self):
+        entrar(self)
+        c = self.json(self.cliente.get('/api/clima'))                    # CLIMA_ATIVO=False nos testes
+        self.assertIs(c['disponivel'], False)
+        self.assertIsNone(c['temperatura'])
+        self.assertIs(c['chuva_prevista'], False)
 
 
 class TestGeral(Base):

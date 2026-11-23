@@ -17,11 +17,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   Estado.carregando($('grafico'));
   const okResumo = await atualizarResumo();
   if (!okResumo) return;
+  atualizarClima();
+  setInterval(() => { if (!document.hidden) atualizarClima(); }, 5 * 60 * 1000);   // o back-end guarda a previsão por 10 min
   controle = criarControlePeriodo($('filtro'), {
     fonte: 'leituras',
     aoMudar: ({ periodo }) => carregarDoPeriodo(periodo),
     aoErro: e => Estado.erro($('grafico'), e.message, () => window.location.reload())
   });
+  // Atualização automática a cada 5 s (o ESP32 envia leituras a cada 5 s). Aba em segundo plano não consulta.
+  setInterval(async () => {
+    if (document.hidden || !periodoAtual) return;
+    const ok = await atualizarResumo();
+    if (ok && periodoAtual.tipo === 'hoje') carregarDoPeriodo(periodoAtual, true, true);
+  }, 5000);
 });
 
 async function atualizarResumo() {
@@ -45,7 +53,35 @@ function renderizarAtual() {
   $('irrigStatus').textContent = resumo.dispositivo_id == null ? 'Sem dispositivo' : ligada ? 'Ligada' : 'Desligada';
   $('irrigNota').textContent = resumo.dispositivo_id == null ? 'Cadastre um dispositivo'
     : ligada ? 'Irrigação em andamento' : resumo.online === false ? 'Sem medições recentes' : 'Irrigação não necessária';
-  $('temperatura').textContent = resumo.temperatura_atual == null ? '—' : `${formatarNumero(resumo.temperatura_atual, 0, 1)}°C`;
+  // Se a propriedade tem sensor de temperatura com leitura, ela tem prioridade sobre a previsão do tempo
+  if (temSensorTemperatura()) $('temperatura').textContent = `${formatarNumero(resumo.temperatura_atual, 0, 1)} °C`;
+}
+
+function temSensorTemperatura() { return resumo != null && resumo.temperatura_atual != null; }
+
+/* Cartão "Clima": temperatura e previsão de chuva da cidade (API Open-Meteo, via back-end).
+   É previsão meteorológica, não sensor da maquete: o cartão mostra a fonte. Com chuva prevista o ESP32 adia a irrigação. */
+async function atualizarClima() {
+  let c;
+  try { c = await getClima(); } catch (e) { c = null; }
+  const chip = $('climaChuva');
+  const sensor = temSensorTemperatura();
+  if (!c || !c.disponivel) {
+    if (!sensor) $('temperatura').textContent = '—';
+    $('climaNota').textContent = c ? c.situacao : 'Previsão do tempo indisponível no momento';
+    chip.hidden = true; return;
+  }
+  $('climaRotulo').textContent = `Clima em ${c.local}`;
+  if (!sensor) $('temperatura').textContent = c.temperatura == null ? '—' : `${formatarNumero(c.temperatura, 0, 1)} °C`;
+  chip.hidden = false;
+  chip.className = 'chip-chuva ' + (c.chuva_prevista ? 'chuva' : 'seco');
+  chip.textContent = c.chovendo ? 'Chovendo' : c.chuva_prevista ? 'Chuva prevista' : 'Sem chuva';
+  const hora = c.atualizado_em ? ` · ${c.atualizado_em.slice(11, 16)}` : '';
+  if (c.simulado) chip.textContent = 'Chuva simulada';
+  $('climaNota').textContent = c.simulado ? 'Demonstração: irrigação adiada, exceto se o solo ficar crítico'
+    : c.chuva_prevista
+    ? `${c.situacao} (${formatarNumero(c.chuva_proximas_horas_mm, 0, 1)} mm): irrigação adiada, exceto se o solo ficar crítico`
+    : `Previsão do tempo ${c.fonte}${hora}`;
 }
 
 /* Cartão "Umidade do solo atual": cor e texto conforme o estado do solo (crítico, seco, adequado, úmido).
@@ -77,12 +113,14 @@ function renderizarSolo() {
   }
 }
 
-async function carregarDoPeriodo(periodo, manterDia) {
+async function carregarDoPeriodo(periodo, manterDia, silencioso) {
   periodoAtual = periodo;
-  selecionada = null; renderizarSolo();
+  if (!silencioso) {                                   // atualização automática: sem "carregando" e sem perder a seleção
+    selecionada = null; renderizarSolo();
+    Estado.carregando($('grafico')); $('resumoUmidade').hidden = true;
+    paginacao.esconder();
+  }
   const manter = manterDia ? paginacao.dia : null;
-  Estado.carregando($('grafico')); $('resumoUmidade').hidden = true;
-  paginacao.esconder();
   try {
     const r = await carregarPeriodo(sinal => getHistoricoData(periodo.inicio, periodo.fim, { signal: sinal }));
     if (!r) return;                                  // resposta antiga: ignora

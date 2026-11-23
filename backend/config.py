@@ -28,6 +28,13 @@ def _inteiro(nome, padrao):
         return padrao
 
 
+def _decimal(nome, padrao):
+    try:
+        return float(_texto(nome, str(padrao)).replace(',', '.'))
+    except ValueError:
+        return padrao
+
+
 def _verdadeiro(nome, padrao=False):
     valor = os.getenv(nome)
     if valor is None:
@@ -66,6 +73,15 @@ def carregar_config():
         # regras do sistema
         'MINUTOS_DISPOSITIVO_ONLINE': 5,         # sem sinal há mais que isso = offline
         'MINUTOS_VALIDADE_LINK': 30,             # validade dos links enviados por e-mail
+        # clima da região (API Open-Meteo, sem chave): temperatura no Dashboard e previsão de chuva para o ESP32
+        'CLIMA_ATIVO': _verdadeiro('CLIMA_ATIVO', True),
+        'CLIMA_SIMULAR_CHUVA': _verdadeiro('CLIMA_SIMULAR_CHUVA'),   # demonstração: força "chuva prevista" (a tela avisa que é simulação)
+        'CLIMA_LOCAL': _texto('CLIMA_LOCAL', 'Juazeiro do Norte - CE'),
+        'CLIMA_LATITUDE': _decimal('CLIMA_LATITUDE', -7.2131),
+        'CLIMA_LONGITUDE': _decimal('CLIMA_LONGITUDE', -39.3153),
+        'CLIMA_CHUVA_AGORA_MM': 0.1,             # a partir disso nesta hora = chovendo
+        'CLIMA_CHUVA_PREVISTA_MM': 1.0,          # soma das próximas horas a partir disso = chuva prevista
+        'UMIDADE_CRITICA': 8,                    # abaixo disso o ESP32 irriga mesmo com chuva prevista
     }
 
 

@@ -16,69 +16,64 @@
     background: #15803d;
 }
 
+/* Cartão do solo: fundo branco como os demais, com uma tarja lateral e o valor na cor do estado do solo
+   (crítico, seco, adequado, úmido). Só visual: nada é gravado. */
 .kpi-solo {
     position: relative;
-    background: #536f50;
-    border-color: #536f50;
-    color: #fff;
-    transition: background-color .25s ease, border-color .25s ease;
+    --cor-solo: #2f7d32;
+    --fundo-solo: #e8f5e9;
+    border-left: 4px solid var(--cor-solo);
+    transition: border-color .25s ease;
 }
 
-.kpi-solo .kpi-rotulo {
-    color: rgba(255,255,255,.9);
+.kpi-solo .kpi-valor {
+    color: var(--cor-solo);
 }
 
-.kpi-solo .kpi-nota {
-    color: rgba(255,255,255,.82);
+.kpi-solo.critico { --cor-solo: #c62828; --fundo-solo: #fdecea; }
+.kpi-solo.seco { --cor-solo: #c2570c; --fundo-solo: #fff1e3; }
+.kpi-solo.adequado { --cor-solo: #2f7d32; --fundo-solo: #e8f5e9; }
+.kpi-solo.umido { --cor-solo: #0b7bbd; --fundo-solo: #e3f2fd; }
+
+.kpi-solo .kpi-status {
+    display: inline-flex;
+    padding: 2px 9px 2px 7px;
+    border-radius: 999px;
+    background: var(--fundo-solo);
+    color: var(--cor-solo);
 }
 
-/* cor por estado do solo (só visual; nada é gravado): crítico, seco, adequado, úmido */
-.kpi-solo.critico {
-    background: #9b2226;
-    border-color: #9b2226;
-}
-
-.kpi-solo.seco {
-    background: #a8560f;
-    border-color: #a8560f;
-}
-
-.kpi-solo.adequado {
-    background: #536f50;
-    border-color: #536f50;
-}
-
-.kpi-solo.umido {
-    background: #1f6f8b;
-    border-color: #1f6f8b;
-}
-
-.kpi-solo.critico .kpi-status .ponto,
-.kpi-solo.critico .kpi-barra div {
-    background: #ffb3b8;
-}
-
-.kpi-solo.seco .kpi-status .ponto,
-.kpi-solo.seco .kpi-barra div {
-    background: #ffd9a8;
-}
-
-.kpi-solo.adequado .kpi-status .ponto,
-.kpi-solo.adequado .kpi-barra div {
-    background: #b8e6a8;
-}
-
-.kpi-solo.umido .kpi-status .ponto,
-.kpi-solo.umido .kpi-barra div {
-    background: #b3e3f5;
+.kpi-solo .kpi-status .ponto,
+.kpi-solo .kpi-barra div {
+    background: var(--cor-solo);
 }
 
 .kpi-barra {
     position: relative;
     height: 6px;
     border-radius: 3px;
-    background: rgba(255,255,255,.25);
+    background: #edf1f5;
     margin-top: 10px;
+}
+
+/* Cartão de clima (previsão do tempo da região) */
+.chip-chuva {
+    flex: none;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.chip-chuva.seco {
+    background: #fff4d6;
+    color: #8a5a00;
+}
+
+.chip-chuva.chuva {
+    background: #e0efff;
+    color: #0b5d94;
 }
 
 /* caixas FIXAS: mesma altura sempre; topo (título), meio (valor) e base (notas) distribuídos, nada cresce nem desloca o resto da tela */
@@ -144,15 +139,15 @@
     top: -2px;
     width: 1px;
     height: 10px;
-    background: rgba(255,255,255,.75);
+    background: #8a96a3;
 }
 
 .kpi-voltar {
     flex: none;
     margin: 0;
-    border: 1px solid rgba(255,255,255,.55);
-    background: rgba(255,255,255,.12);
-    color: #fff;
+    border: 1px solid #c9d3de;
+    background: #fff;
+    color: var(--texto);
     border-radius: 6px;
     padding: 3px 10px;
     font: 600 10px var(--fonte);
@@ -160,11 +155,11 @@
 }
 
 .kpi-voltar:hover {
-    background: rgba(255,255,255,.25);
+    background: #f1f4f7;
 }
 
 .kpi-voltar:focus-visible {
-    outline: 2px solid #fff;
+    outline: 2px solid var(--azul);
     outline-offset: 2px;
 }
 
@@ -219,7 +214,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 18px;
-    font-size: 10px;
+    font-size: 11px;
     color: var(--cinza);
     margin: 12px 0 6px;
 }
@@ -250,9 +245,29 @@
     border-top: 1.5px dashed #9aa5b3;
 }
 
+.leg-linha.laranja { border-top-color: #c2570c; }
+.leg-linha.verde { border-top-color: #15803d; }
+
+.leg-curva {
+    width: 18px;
+    height: 3px;
+    border-radius: 2px;
+    background: #0b86d1;
+}
+
 .leg-faixa {
     width: 14px;
     height: 10px;
-    background: #c9f2c7;
-    border: 1px solid #b4e5b1;
+    background: rgba(34, 197, 94, .14);
+    border-top: 3px solid rgba(22, 163, 74, .75);
+}
+
+.kpi-clima .kpi-valor {
+    white-space: nowrap;
+}
+
+.kpi-clima .kpi-linha {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 4px 12px;
 }
